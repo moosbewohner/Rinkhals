@@ -1,0 +1,3 @@
+LD_LIBRARY_PATH=/useremain/rinkhals/.current/lib:/useremain/rinkhals/.current/usr/lib \
+    /useremain/rinkhals/.current/lib/ld-linux-armhf.so.3 \
+    /useremain/rinkhals/.current/usr/libexec/sftp-server

@@ -1,0 +1,8 @@
+
+# Rinkhals/begin
+if [ -f /useremain/rinkhals/start-rinkhals.sh ]; then
+    echo Rinkhals is installed, starting...
+    chmod +x /useremain/rinkhals/start-rinkhals.sh
+    /useremain/rinkhals/start-rinkhals.sh
+fi
+# Rinkhals/end
