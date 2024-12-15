@@ -1,20 +1,25 @@
 #!/bin/sh
 
+function log() {
+    echo "${*}"
+    echo "`date`: ${*}" >> /useremain/rinkhals/rinkhals.log
+}
+
 if [ ! -f /useremain/rinkhals/.version ]; then
-    echo Rinkhals is installed but no version is selected to start
+    log Rinkhals is installed but no version is selected to start
     exit 1
 fi
 
 if [ -f /mnt/udisk/.disable-rinkhals ] || [ -f /useremain/rinkhals/.disable-rinkhals ]; then
-    echo Rinkhals statup was stopped with the .disable-rinkhals file
+    log Rinkhals statup was stopped with the .disable-rinkhals file
     exit 1
 fi
 
 RINKHALS_VERSION=`cat /useremain/rinkhals/.version`
-echo Rinkhals version $RINKHALS_VERSION selected
+log Rinkhals version $RINKHALS_VERSION selected
 
 if [ ! -d /useremain/rinkhals/$RINKHALS_VERSION ]; then
-    echo Rinkhals version $RINKHALS_VERSION does not exist
+    log Rinkhals version $RINKHALS_VERSION does not exist
     exit 1
 fi
 

@@ -67,6 +67,7 @@ if [[ "$KOBRA_VERSION" != "2.3.5.3" ]]; then
 fi
 
 export INTERPRETER=$RINKHALS_ROOT/lib/ld-linux-armhf.so.3
+touch /useremain/rinkhals/.disable-rinkhals
 
 
 ################
@@ -203,7 +204,7 @@ check_by_name gkapi
 log "> Cleaning up..."
 
 kill_by_port 2222
-
+rm /useremain/rinkhals/.disable-rinkhals
 
 echo
 log "Rinkhals started"
