@@ -81,11 +81,20 @@ if [[ "$KOBRA_VERSION" != "2.3.5.3" ]]; then
 fi
 
 
+# Backup the machine-specific files
+progress 0.1
+
+rm -f /mnt/udisk/aGVscF9zb3Nf/device.ini
+rm -f /mnt/udisk/aGVscF9zb3Nf/device_account.json
+cp /userdata/app/gk/config/device.ini /mnt/udisk/aGVscF9zb3Nf/device.ini
+cp /userdata/app/gk/config/device_account.json /mnt/udisk/aGVscF9zb3Nf/device_account.json
+
+
 # TODO: Check if we have enough space
 
 
 # Copy Rinkhals
-progress 0.1
+progress 0.2
 
 RINKHALS_VERSION=`cat ${update_file_path}/.version`
 log "Installing Rinkhals version $RINKHALS_VERSION"

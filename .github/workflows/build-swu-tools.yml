@@ -1,0 +1,29 @@
+name: Build SWU tools
+
+on:
+  workflow_dispatch:
+  
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - run: |
+        docker run --rm -v ${{ github.workspace }}/build:/build -v ${{ github.workspace }}/files:/files ghcr.io/jbatonnet/rinkjals/build /bin/bash -c "chmod +x /build/swu-tools/ssh/build-swu.sh && /build/swu-tools/ssh/build-swu.sh"
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: tools-ssh.swu
+        path: |
+          build/dist/update.swu
+    - run: |
+        docker run --rm -v ${{ github.workspace }}/build:/build -v ${{ github.workspace }}/files:/files ghcr.io/jbatonnet/rinkjals/build /bin/bash -c "chmod +x /build/swu-tools/backup-partitions/build-swu.sh && /build/swu-tools/backup-partitions/build-swu.sh"
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: tools-backup-partitions.swu
+        path: |
+          build/dist/update.swu
+  
