@@ -61,7 +61,7 @@ echo "    ██░░░░░░░░░░░░░░░░░░███�
 echo "      ██████████████████    ██    "
 echo
 
-export KOBRA_VERSION=`cat /userdata/app/gk/version_log.txt | grep version | awk '{print $2}'`
+export KOBRA_VERSION=`cat /useremain/dev/version`
 export RINKHALS_VERSION=`cat .version`
 export RINKHALS_ROOT=`pwd`
 
@@ -72,10 +72,16 @@ log "| Rinkhals root: $RINKHALS_ROOT"
 log " --------------------------------------------------"
 echo
 
-if [[ "$KOBRA_VERSION" != "2.3.5.3" ]]; then
-    log This Rinkhals version is only compatible with Kobra firmware 2.3.5.3, stopping startup
+if [ "$KOBRA_VERSION" != "2.3.5.3" ]; then
+    log "This Rinkhals version is only compatible with Kobra firmware 2.3.5.3, stopping startup"
     exit 1
 fi
+
+REMOTE_MODE=`cat /useremain/dev/remote_ctrl_mode`
+if [ "$REMOTE_MODE" != "lan" ]; then
+    log "LAN mode is disabled, some functions might not work properly"
+fi
+
 
 export INTERPRETER=$RINKHALS_ROOT/lib/ld-linux-armhf.so.3
 touch /useremain/rinkhals/.disable-rinkhals
@@ -181,6 +187,10 @@ mount --bind /useremain ./useremain
 mkdir -p /userdata/app/gk/printer_data
 umount /userdata/app/gk/printer_data 2> /dev/null
 mount --bind ./home/rinkhals/printer_data /userdata/app/gk/printer_data
+
+mkdir -p /userdata/app/gk/printer_data/gcodes
+umount /userdata/app/gk/printer_data/gcodes 2> /dev/null
+mount --bind /useremain/app/gk/gcodes /userdata/app/gk/printer_data/gcodes
 
 chmod +x chroot-start.sh
 chroot $(pwd) /bin/ash chroot-start.sh

@@ -64,7 +64,7 @@ progress 0
 
 
 # Make sure we install on the right compatible version
-KOBRA_VERSION=`cat /userdata/app/gk/version_log.txt | grep version | awk '{print $2}'`
+KOBRA_VERSION=`cat /useremain/dev/version`
 
 if [[ "$KOBRA_VERSION" != "2.3.5.3" ]]; then
     log "This Rinkhals version is only compatible with Kobra firmware 2.3.5.3, stopping installation"

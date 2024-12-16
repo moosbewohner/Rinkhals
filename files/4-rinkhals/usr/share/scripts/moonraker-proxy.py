@@ -21,6 +21,7 @@ MOONRAKER_PORT = os.getenv('MOONRAKER_PROXY_MOONRAKER_PORT', default = '7126')
 PRINTER_ID = os.getenv('MOONRAKER_PROXY_PRINTER_ID')
 MQTT_USERNAME = os.getenv('MOONRAKER_PROXY_MQTT_USERNAME')
 MQTT_PASSWORD = os.getenv('MOONRAKER_PROXY_MQTT_PASSWORD')
+REMOTE_MODE = 'lan'
 
 # Constants
 CORS_HEADERS = {
@@ -63,7 +64,7 @@ async def websocket_handler(request):
                         if "method" in data:
                             #print(data["method"]) 
                             
-                            if data["method"] == "printer.print.start":
+                            if data["method"] == "printer.print.start" and REMOTE_MODE == 'lan':
 
                                 payload = """{{
                                     "type": "print",
@@ -118,19 +119,26 @@ async def start_server():
 
 if __name__ == "__main__":
 
+    # We should use internal MQTT only if LAN mode is enabled
+    with open('/useremain/dev/remote_ctrl_mode', 'r') as f:
+        REMOTE_MODE = f.read().strip()
+
     # Retrieve printer information
-    if not PRINTER_ID or not MQTT_USERNAME or not MQTT_PASSWORD:
+    if not MQTT_USERNAME or not MQTT_PASSWORD:
 
         with open('/userdata/app/gk/config/device_account.json', 'r') as f:
             json_data = f.read()
             data = json.loads(json_data)
 
-            if not PRINTER_ID:
-                PRINTER_ID = data['deviceId']
             if not MQTT_USERNAME:
                 MQTT_USERNAME = data['username']
             if not MQTT_PASSWORD:
                 MQTT_PASSWORD = data['password']
+
+    if not PRINTER_ID:
+
+        with open('/useremain/dev/device_id', 'r') as f:
+            PRINTER_ID = f.read().strip()
 
     # Start asynchonous server
     loop = asyncio.get_event_loop()

@@ -11,7 +11,7 @@ function kill_by_name() {
 
         if echo "$CMDLINE" | grep -q "${*}"; then
             log "Killing $PID ($CMDLINE)"
-            kill $PID
+            kill -9 $PID
         fi
     done
 }
@@ -31,6 +31,8 @@ kill_by_name moonraker.py
 kill_by_name moonraker-proxy.py
 kill_by_name nginx
 kill_by_name mjpg_streamer
+
+sleep 5
 
 
 ################
