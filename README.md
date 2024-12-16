@@ -24,13 +24,14 @@ The stock firmwares are available on a separate branch: https://github.com/jbato
 
 ## Known issues / Future developments
 
-- If not installed properly, the printer shows a 11407 error > See the section about error 11407 below
+The [wiki](https://github.com/jbatonnet/Rinkhals/wiki) is a collection of documentation, reverse engineering and notes about the printer and development, don't forget to [check it out](https://github.com/jbatonnet/Rinkhals/wiki)!
+
+- If not installed properly, the printer shows a 11407 error > [See the wiki about error 11407](https://github.com/jbatonnet/Rinkhals/wiki/Firmware#my-printer-shows-a-11407-error)
 - The camera is not accessible from Anycubic apps anymore
 - Mainsail/Fluidd gcode preview doesn't work
 - OctoApp notification plugin is missing
 
 Other:
-- Build the SWU file and make sure SSH works all the way
 - Check free space before install
 - Buildroot / FFmpeg with freetext, mjpeg, fbdev, png, bmp, h264
 - Installation screen (kill K3SysUi, show screens then reboot or restore K3SysUi?)
@@ -38,7 +39,19 @@ Other:
 - Timelapse support
 - Logs cleanup
 - Old Rinkhals versions cleanup
-- Packaging + Auto version names + Github actions
+
+
+## SWU tools
+
+This repo contains some tools you can use **no matter what firmware you are using**. It is a set of scripts packaged in a SWU file.
+
+They are available on this page: https://github.com/jbatonnet/Rinkhals/actions/workflows/build-swu-tools.yml
+
+You can download the SWU file for the tool you want, copy it on a FAT32 USB drive in a **aGVscF9zb3Nf** directory, plug the USB drive in the Kobra and it just works.
+
+Here are the tools available:
+- **SSH**: get a SSH server running on port **2222**, even on stock firmware
+- **Backup partitions**: creates a dump of your userdata and useremain partition on the USB drive
 
 
 <p align="center">
@@ -46,38 +59,37 @@ Other:
 </p>
 
 
-## How to install a firmware
+## How to install Rinkhals
 
-At this point you should have a .swu file, either a stock firmware or a custom one.
+You can install Rinkhals on top of other custom firmwares. Rinkhals only appends its loader to **start.sh**, so if it's the last instruction, it will start no matter what firmware you are using.
 
+- Make sure your printer uses firmware 2.3.5.3 ([how to install firmware](https://github.com/jbatonnet/Rinkhals/wiki/Firmware#how-to-install-a-firmware))
+    - Installation will simply fail without touching your printer if you are using some other version
 - Format a USB drive as FAT32
-- Create a new directory
-    - If the firmware is based on 2.3.3.9 or later (most firmwares should now), name it **aGVscF9zb3Nf**
-    - If it's an older one before 2.3.3.9, name it **update**
-- Copy your .swu file in this directory as **update.swu**
+- Create a directory named **aGVscF9zb3Nf**
+- Download the version of Rinkhals you want to install
+- Copy the **update.swu** file in the **aGVscF9zb3Nf** directory
 - Plug the USB drive in the Kobra 3
-- You should hear a beep, meaning the printer detected the firmware file
-- Give the printer some time
-- Then it should reboot itself. If it doesn't, wait 20~30 minutes then reboot the printer manually
-- Once installed, the update.swu file will have been removed from the USB drive, you can check as a confirmation
+- You should hear a beep, meaning the printer detected the update file
+- After about 20 seconds (the time for the printer to prepare the update), you will see a progress bar on the screen
+    - If the progress bar turns green and you ear 2 beeps, the pritner reboots and Rinkhals is installed
+    - If the progress bar turns red and you ear 3 beeps, the installation failed but everyhting should still work as usual. You will then find more information on the **aGVscF9zb3Nf/install.log** file on the USB drive
 
-> [!NOTE]
-> When installing Rinkhals, you will ear one beep, then ~10s later a progress will show up on screen. <br />
-  Once you ear two beeps or when the progress bar is full green, the installation is complete and the printer will reboot. <br />
-  If you ear 3 beeps or the progress bar is full red, the installation failed but everything should still work. You will find the installation logs on the USB drive.
 
-## My printer shows a 11407 error
+## How to uninstall Rinkhals
 
-Don't worry, you can still re-flash stock firmware and try again.
-Here is the full process to recover from this state:
+### 1. Disable Rinkhals
 
-- Reflash the stock 2.3.3.9 firmware (https://github.com/jbatonnet/Rinkhals/tree/stock-firmwares)
-- Do a factory reset from the printer touchscreen (Settings > Device information > System restore)
-- Once done, let the printer update itself to 2.3.5.3 or flash the stock 2.3.5.3 firmware
-- Then perform the regular installation described above
+**Method 1**: Create a .disable-rinkhals file on a USB drive or at this location: /useremain/rinkhals/.disable-rinkhals
+This will prevent Rinkhals from starting.
 
-> [!NOTE]
-> Even if you get 11407 using a 2.5.3.5 firmware, you might need to downgrade to 2.3.3.9 to recover. Please follow all the steps listed above
+**Method 2**: Factory reset might have done that already, but make sure your /userdata/app/gk/start.sh and /userdata/app/gk/restart_k3c.sh don't contain a # Rinkhals/begin section. If they do, remove the section between # Rinkhals/begin and # Rinkhals/end.
+
+### 2. Reboot
+Reboot once Rinkhals is disabled to make sure it didn't start, so you'll be able to remove the files.
+
+### 3. Delete Rinkhals
+Then you can delete the /useremain/rinkhals directory. That's it!
 
 
 <p align="center">

@@ -2,6 +2,17 @@ function log() {
     echo "${*}"
     echo "`date`: ${*}" >> /useremain/rinkhals/.current/rinkhals.log
 }
+function kill_by_name() {
+    for i in `ls /proc/*/cmdline 2> /dev/null`; do
+        PID=`echo $i | awk -F'/' '{print $3}'`
+        CMDLINE=`cat $i` 2>/dev/null
+
+        if echo "$CMDLINE" | grep -q "${*}"; then
+            log "Killing $PID ($CMDLINE)"
+            kill -9 $PID
+        fi
+    done
+}
 function kill_by_port() {
     XPORT=`printf "%04X" ${*}`
     INODE=`cat /proc/net/tcp | grep 00000000:$XPORT | awk '/.*:.*:.*/{print $10;}'` # Port 2222
@@ -10,7 +21,7 @@ function kill_by_port() {
         CMDLINE=`cat /proc/$PID/cmdline`
 
         log "Killing $PID ($CMDLINE)"
-        kill $PID
+        kill -9 $PID
     fi
 }
 function check_by_name() {
@@ -134,9 +145,10 @@ fi
 ################
 log "> Stopping Klipper..."
 
-killall gklib 2> /dev/null
-killall gkapi 2> /dev/null
-killall K3SysUi 2> /dev/null
+kill_by_name K3SysUi
+kill_by_name gkcam
+kill_by_name gkapi
+kill_by_name gklib
 
 
 ################
@@ -183,21 +195,21 @@ LD_LIBRARY_PATH=/userdata/app/gk:$LD_LIBRARY_PATH \
     /userdata/app/gk/gklib -a /tmp/unix_uds1 /userdata/app/gk/printer_data/config/printer.cfg \
     &> $RINKHALS_ROOT/gklib.log &
 
-sleep 2
+sleep 4
 
 LD_LIBRARY_PATH=/userdata/app/gk:$LD_LIBRARY_PATH \
     /userdata/app/gk/gkapi \
     &> $RINKHALS_ROOT/gkapi.log &
 
-sleep 2
-
 LD_LIBRARY_PATH=/userdata/app/gk:$LD_LIBRARY_PATH \
     /userdata/app/gk/K3SysUi \
     &> $RINKHALS_ROOT/gkui.log &
 
+cd $RINKHALS_ROOT
 
 check_by_name gklib
 check_by_name gkapi
+check_by_name K3SysUi
 
 
 ################
