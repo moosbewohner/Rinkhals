@@ -32,7 +32,7 @@ cp -pr /work/mainsail/* /files/2-external/usr/share/mainsail
 # Moonraker
 echo "Downloading Moonraker..."
 
-wget -O moonraker.zip https://github.com/utkabobr/moonraker/archive/0be5d6b25e2099b218bf0927ca70e69e54c50085.zip
+wget -O moonraker.zip https://github.com/utkabobr/moonraker/archive/refs/heads/duckpro.zip
 unzip -d moonraker moonraker.zip
 
 mkdir -p /files/2-external/usr/share/moonraker

@@ -84,11 +84,7 @@ class Machine:
         dist_info = {'name': distro.name(pretty=True)}
         dist_info.update(distro.info())
         dist_info['release_info'] = distro.distro_release_info()
-        try:
-            dist_info['kernel_version'] = platform.release()
-        except Exception:
-            dist_info['kernel_version'] = "Unknown"
-
+        dist_info['kernel_version'] = platform.release()
         self.inside_container = False
         self.moonraker_service_info: Dict[str, Any] = {}
         self.sudo_req_lock = asyncio.Lock()
@@ -577,19 +573,10 @@ class Machine:
     def _get_cpu_info(self) -> Dict[str, Any]:
         cpu_file = pathlib.Path("/proc/cpuinfo")
         mem_file = pathlib.Path("/proc/meminfo")
-        processor = ""
-        bits = ""
-        try:
-            bits = platform.architecture()[0]
-            processor = platform.processor() or platform.machine()
-        except Exception:
-            bits = "Unknown"
-            processor = "Unknown"
-
         cpu_info = {
             'cpu_count': os.cpu_count(),
-            'bits': bits,
-            'processor': processor,
+            'bits': platform.architecture()[0],
+            'processor': platform.processor() or platform.machine(),
             'cpu_desc': "",
             'serial_number': "",
             'hardware_desc': "",
@@ -635,8 +622,8 @@ class Machine:
     def _check_inside_container(self) -> Dict[str, Any]:
         cgroup_file = pathlib.Path(CGROUP_PATH)
         virt_type = virt_id = "none"
-        try:
-            if cgroup_file.exists():
+        if cgroup_file.exists():
+            try:
                 data = cgroup_file.read_text()
                 container_types = ["docker", "lxc"]
                 for ct in container_types:
@@ -648,8 +635,8 @@ class Machine:
                             f"Container detected via cgroup: {ct}"
                         )
                         break
-        except Exception:
-            logging.exception(f"Error reading {CGROUP_PATH}")
+            except Exception:
+                logging.exception(f"Error reading {CGROUP_PATH}")
 
         # Fall back to process schedule check
         if not self.inside_container:

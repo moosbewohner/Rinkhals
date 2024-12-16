@@ -201,16 +201,38 @@ def find_serial_devices() -> List[Dict[str, Any]]:
         }
     tty_dir = pathlib.Path(TTY_PATH)
     for tty_path in tty_dir.iterdir():
-        # Beam changed: beam uses simple list of serial devices
+        device_folder = tty_path.joinpath("device")
+        if not device_folder.is_dir():
+            continue
+        uartclk_file = tty_path.joinpath("uartclk")
+        port_file = tty_path.joinpath("port")
+        device_name = tty_path.name
+        driver_name = device_folder.joinpath("driver").resolve().name
         device_info: Dict[str, Any] = {
             "device_type": "unknown",
-            "device_path": str(tty_path),
-            "device_name": str(tty_path),
-            "driver_name": "Android",
-            "path_by_hardware": str(tty_path),
-            "path_by_id": str(tty_path),
+            "device_path": str(dev_root_folder.joinpath(device_name)),
+            "device_name": device_name,
+            "driver_name": driver_name,
+            "path_by_hardware": devs_by_path.get(device_name),
+            "path_by_id": devs_by_id.get(device_name),
             "usb_location": None
         }
+        if uartclk_file.is_file() and port_file.is_file():
+            # This is a potential hardware uart.  Need to
+            # validate that "serial8250" devices have a port
+            # number of zero
+            if driver_name == "serial8250":
+                portnum = int(port_file.read_text().strip(), 16)
+                if portnum != 0:
+                    # Not a usable UART
+                    continue
+            device_info["device_type"] = "hardware_uart"
+        else:
+            usb_path = device_folder.resolve()
+            usb_location: Optional[str] = find_usb_folder(usb_path)
+            if usb_location is not None:
+                device_info["device_type"] = "usb"
+                device_info["usb_location"] = usb_location
         serial_devs.append(device_info)
     return serial_devs
 
