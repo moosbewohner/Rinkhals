@@ -48,10 +48,12 @@ This repo contains some tools you can use **no matter what firmware you are usin
 They are available on this page: https://github.com/jbatonnet/Rinkhals/actions/workflows/build-swu-tools.yml
 
 You can download the SWU file for the tool you want, copy it on a FAT32 USB drive in a **aGVscF9zb3Nf** directory, plug the USB drive in the Kobra and it just works.
+You will ear two beeps, the second one will tell you that the tool completed its work. There is no need to reboot afterwards.
 
 Here are the tools available:
 - **SSH**: get a SSH server running on port **2222**, even on stock firmware
 - **Backup partitions**: creates a dump of your userdata and useremain partition on the USB drive
+- **Debug bundle**: creates a zip file with printer and configuration information on the USB drive to ease debugging
 
 
 <p align="center">

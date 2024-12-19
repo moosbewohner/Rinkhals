@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # From a Windows machine:
-#   docker run --rm -it -v .\build:/build -v .\files:/files ghcr.io/jbatonnet/rinkjals/build /build/swu-tools/backup-partitions/build-swu.sh
+#   docker run --rm -it -v .\build:/build -v .\files:/files ghcr.io/jbatonnet/rinkjals/build /build/swu-tools/debug-bundle/build-swu.sh
 
 set -e
 
@@ -10,7 +10,7 @@ set -e
 mkdir -p /tmp/update_swu
 rm -rf /tmp/update_swu/*
 
-cp /build/swu-tools/backup-partitions/update.sh /tmp/update_swu/update.sh
+cp /build/swu-tools/debug-bundle/update.sh /tmp/update_swu/update.sh
 
 
 # Create the setup.tar.gz

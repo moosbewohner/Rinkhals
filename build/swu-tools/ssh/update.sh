@@ -2,7 +2,7 @@
 
 function beep() {
     echo 1 > /sys/class/pwm/pwmchip0/pwm0/enable
-    sleep ${*}
+    usleep $((${*}*1000))
     echo 0 > /sys/class/pwm/pwmchip0/pwm0/enable
 }
 
@@ -33,4 +33,4 @@ rm -rf ${update_file_path}
 sync
 
 # Beep to notify completion
-beep 1
+beep 500
