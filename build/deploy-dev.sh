@@ -12,8 +12,20 @@ fi
 
 export RCLONE_CONFIG_KOBRA_TYPE=sftp
 export RCLONE_CONFIG_KOBRA_HOST=$KOBRA_IP
+export RCLONE_CONFIG_KOBRA_PORT=${KOBRA_PORT:-22}
 export RCLONE_CONFIG_KOBRA_USER=root
 export RCLONE_CONFIG_KOBRA_PASS=`rclone obscure "rockchip"`
+
+# Sync base files
+mkdir -p /tmp/target
+rm -rf /tmp/target/*
+
+cp -r /files/*.* /tmp/target
+echo "dev" > /tmp/target/.version
+
+rclone -v sync --absolute \
+    --filter "- /*.log" --filter "- /update.sh" --filter "+ /*" --filter "- *" \
+    /tmp/target Kobra:/useremain/rinkhals
 
 
 # Combine layers
@@ -55,4 +67,8 @@ echo "dev" > /tmp/target/.version
 
 
 # Push to the Kobra
-rclone -v sync --exclude *.log /tmp/target Kobra:/useremain/rinkhals/dev
+rclone -v sync --absolute \
+    --filter "- *.log" --filter "- *.pyc" --filter "- __pycache__/**" --filter "- /home/rinkhals/printer_data/**" \
+    --filter "+ /*.*" --filter "+ /bin/**" --filter "+ /sbin/**" --filter "+ /usr/**" --filter "+ /etc/**" --filter "+ /home/**" --filter "+ /lib/**" --filter "- *.log" \
+    --filter "- *" \
+    /tmp/target Kobra:/useremain/rinkhals/dev

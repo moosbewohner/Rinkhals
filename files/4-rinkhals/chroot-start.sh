@@ -42,11 +42,11 @@ function check_by_port() {
 log "> Starting Moonraker..."
 
 mkdir -p /userdata/app/gk/printer_data
-umount /userdata/app/gk/printer_data 2> /dev/null
+umount -l /userdata/app/gk/printer_data 2> /dev/null
 mount --bind /home/rinkhals/printer_data /userdata/app/gk/printer_data
 
 mkdir -p /userdata/app/gk/printer_data/gcodes
-umount /userdata/app/gk/printer_data/gcodes 2> /dev/null
+umount -l /userdata/app/gk/printer_data/gcodes 2> /dev/null
 mount --bind /useremain/app/gk/gcodes /userdata/app/gk/printer_data/gcodes
 
 kill_by_name moonraker.py

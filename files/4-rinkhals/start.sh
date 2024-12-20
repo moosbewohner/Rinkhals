@@ -82,8 +82,12 @@ if [ "$REMOTE_MODE" != "lan" ]; then
     log "LAN mode is disabled, some functions might not work properly"
 fi
 
-
 export INTERPRETER=$RINKHALS_ROOT/lib/ld-linux-armhf.so.3
+
+
+################
+log "> Creating .disable-rinkhals..."
+
 touch /useremain/rinkhals/.disable-rinkhals
 
 
@@ -91,6 +95,7 @@ touch /useremain/rinkhals/.disable-rinkhals
 log "> Fixing permissions..."
 
 chmod +x $INTERPRETER 2> /dev/null
+chmod +x ./*.sh 2> /dev/null
 chmod +x ./bin/* 2> /dev/null
 chmod +x ./sbin/* 2> /dev/null
 chmod +x ./usr/bin/* 2> /dev/null
@@ -104,7 +109,7 @@ log "> Starting SSH..."
 
 kill_by_port 2222
 
-umount /usr/libexec 2> /dev/null
+umount -l /usr/libexec 2> /dev/null
 mount --bind $RINKHALS_ROOT/usr/share/scripts /usr/libexec
 
 LD_LIBRARY_PATH=$RINKHALS_ROOT/lib:$RINKHALS_ROOT/usr/lib \
@@ -160,36 +165,36 @@ kill_by_name gklib
 ################
 log "> Preparing chroot..."
 
-# TODO: Clean mounts
 mkdir -p ./proc
 mkdir -p ./sys
 mkdir -p ./dev
 mkdir -p ./run
 mkdir -p ./tmp
-umount ./proc 2> /dev/null
-umount ./sys 2> /dev/null
-umount ./dev 2> /dev/null
-umount ./run 2> /dev/null
-umount ./tmp 2> /dev/null
+mkdir -p ./userdata
+mkdir -p ./useremain
+
+umount -l ./proc 2> /dev/null
+umount -l ./sys 2> /dev/null
+umount -l ./dev 2> /dev/null
+umount -l ./run 2> /dev/null
+umount -l ./tmp 2> /dev/null
+umount -l ./userdata 2> /dev/null
+umount -l ./useremain 2> /dev/null
+
 mount -t proc /proc ./proc
 mount -t sysfs /sys ./sys
 mount --rbind /dev ./dev
 mount --rbind /run ./run
 mount --bind /tmp ./tmp
-
-mkdir -p ./userdata
-mkdir -p ./useremain
-umount ./userdata 2> /dev/null
-umount ./useremain 2> /dev/null
 mount --bind /userdata ./userdata
 mount --bind /useremain ./useremain
 
 mkdir -p /userdata/app/gk/printer_data
-umount /userdata/app/gk/printer_data 2> /dev/null
+umount -l /userdata/app/gk/printer_data 2> /dev/null
 mount --bind ./home/rinkhals/printer_data /userdata/app/gk/printer_data
 
 mkdir -p /userdata/app/gk/printer_data/gcodes
-umount /userdata/app/gk/printer_data/gcodes 2> /dev/null
+umount -l /userdata/app/gk/printer_data/gcodes 2> /dev/null
 mount --bind /useremain/app/gk/gcodes /userdata/app/gk/printer_data/gcodes
 
 chmod +x chroot-start.sh
@@ -217,16 +222,17 @@ LD_LIBRARY_PATH=/userdata/app/gk:$LD_LIBRARY_PATH \
 
 cd $RINKHALS_ROOT
 
+sleep 2
+
 check_by_name gklib
 check_by_name gkapi
-check_by_name K3SysUi
 
 
 ################
 log "> Cleaning up..."
 
-kill_by_port 2222
 rm /useremain/rinkhals/.disable-rinkhals
+kill_by_port 2222
 
 echo
 log "Rinkhals started"

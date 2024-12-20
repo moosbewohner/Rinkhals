@@ -26,13 +26,15 @@ fi
 ################
 log "> Stopping everything..."
 
-kill_by_name ntpclient.sh
+killall nginx
+killall nginx
+
+sleep 2
+
 kill_by_name moonraker.py
 kill_by_name moonraker-proxy.py
 kill_by_name nginx
 kill_by_name mjpg_streamer
-
-sleep 5
 
 
 ################
@@ -40,20 +42,24 @@ log "> Cleaning chroot..."
 
 cd /useremain/rinkhals/.current
 
-umount -f ./proc 2> /dev/null
-umount -f ./sys 2> /dev/null
-umount -f ./dev 2> /dev/null
-umount -f ./run 2> /dev/null
-umount -f ./tmp 2> /dev/null
-umount -f ./userdata 2> /dev/null
-umount -f ./useremain 2> /dev/null
+umount -l /userdata/app/gk/printer_data/gcodes 2> /dev/null
+umount -l /userdata/app/gk/printer_data 2> /dev/null
 
-# rm -rf ./proc
-# rm -rf ./sys
-# rm -rf ./dev
-# rm -rf ./run
-# rm -rf ./userdata
-# rm -rf ./useremain
+umount -l ./proc 2> /dev/null
+umount -l ./sys 2> /dev/null
+umount -l ./dev 2> /dev/null
+umount -l ./run 2> /dev/null
+umount -l ./tmp 2> /dev/null
+umount -l ./userdata 2> /dev/null
+umount -l ./useremain 2> /dev/null
+
+rm -rf ./proc
+rm -rf ./sys
+rm -rf ./dev
+rm -rf ./run
+rm -rf ./tmp
+rm -rf ./userdata
+rm -rf ./useremain
 
 
 ################
