@@ -95,7 +95,7 @@ kill_by_name mjpg_streamer
 sleep 2
 
 LD_LIBRARY_PATH=/usr/lib/mjpg-streamer:$LD_LIBRARY_PATH \
-    /usr/bin/mjpg_streamer -i "input_uvc.so -d /dev/video10 -n -r 1280x720" -o "output_http.so -w /usr/share/mjpg-streamer/www" \
+    /usr/bin/mjpg_streamer -i "input_uvc.so -d /dev/video10 -n -r 864x480" -o "output_http.so -w /usr/share/mjpg-streamer/www" \
     > mjpg_streamer.log 2>&1 &
 
 check_by_name mjpg_streamer
