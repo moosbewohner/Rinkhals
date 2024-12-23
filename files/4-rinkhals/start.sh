@@ -4,10 +4,10 @@ function log() {
 }
 function kill_by_name() {
     for i in `ls /proc/*/cmdline 2> /dev/null`; do
-        PID=`echo $i | awk -F'/' '{print $3}'`
         CMDLINE=`cat $i` 2>/dev/null
 
         if echo "$CMDLINE" | grep -q "${*}"; then
+            PID=`echo $i | awk -F'/' '{print $3}'`
             log "Killing $PID ($CMDLINE)"
             kill -9 $PID
         fi
@@ -34,6 +34,11 @@ function check_by_name() {
     done
 
     log "/!\ ${*} should be running but it's not"
+    quit
+}
+function quit() {
+    cd /userdata/app/gk
+    LD_LIBRARY_PATH=/userdata/app/gk:$LD_LIBRARY_PATH ./K3SysUi &
     exit 1
 }
 
@@ -86,7 +91,10 @@ export INTERPRETER=$RINKHALS_ROOT/lib/ld-linux-armhf.so.3
 
 
 ################
-log "> Creating .disable-rinkhals..."
+log "> Preparing startup..."
+
+killall K3SysUi
+kill_by_name K3SysUi
 
 touch /useremain/rinkhals/.disable-rinkhals
 
@@ -115,11 +123,13 @@ mount --bind $RINKHALS_ROOT/usr/share/scripts /usr/libexec
 LD_LIBRARY_PATH=$RINKHALS_ROOT/lib:$RINKHALS_ROOT/usr/lib \
     $INTERPRETER ./usr/sbin/dropbear -F -E -a -p 2222 -P /tmp/dropbear_debug.pid -r ./etc/dropbear/dropbear_rsa_host_key \
     1>> ./dropbear_debug.log 2>> ./dropbear_debug.log &
+
+DROPBEAR_DEBUG_PID=$!
 sleep 1
 
 if [[ "$(cat /proc/net/tcp | grep 00000000:08AE)" == "" ]]; then # 2222 = x8AE
     log "/!\ SSH backup did not start properly"
-    exit 1
+    quit
 fi
 
 if [[ "$(cat /proc/net/tcp | grep 00000000:0016)" != "" ]]; then # 22 = x16
@@ -132,7 +142,7 @@ else
     sleep 1
     if [[ "$(cat /proc/net/tcp | grep 00000000:0016)" == "" ]]; then # 22 = x16
         log "/!\ SSH did not start properly"
-        exit 1
+        quit
     fi
 fi
 
@@ -148,7 +158,7 @@ else
 
     if [[ "$(cat /proc/net/tcp | grep 00000000:08AE)" == "" ]]; then # 5555 = x15B3
         log "/!\ ADB did not start properly"
-        exit 1
+        quit
     fi
 fi
 
@@ -156,10 +166,9 @@ fi
 ################
 log "> Stopping Klipper..."
 
-kill_by_name K3SysUi
-kill_by_name gkcam
-kill_by_name gkapi
-kill_by_name gklib
+killall gkcam
+killall gkapi
+killall gklib
 
 
 ################
@@ -210,7 +219,7 @@ LD_LIBRARY_PATH=/userdata/app/gk:$LD_LIBRARY_PATH \
     /userdata/app/gk/gklib -a /tmp/unix_uds1 /userdata/app/gk/printer_data/config/printer.cfg \
     &> $RINKHALS_ROOT/gklib.log &
 
-sleep 4
+sleep 2
 
 LD_LIBRARY_PATH=/userdata/app/gk:$LD_LIBRARY_PATH \
     /userdata/app/gk/gkapi \
@@ -222,7 +231,7 @@ LD_LIBRARY_PATH=/userdata/app/gk:$LD_LIBRARY_PATH \
 
 cd $RINKHALS_ROOT
 
-sleep 2
+sleep 1
 
 check_by_name gklib
 check_by_name gkapi
@@ -232,7 +241,7 @@ check_by_name gkapi
 log "> Cleaning up..."
 
 rm /useremain/rinkhals/.disable-rinkhals
-kill_by_port 2222
+kill -9 $DROPBEAR_DEBUG_PID
 
 echo
 log "Rinkhals started"

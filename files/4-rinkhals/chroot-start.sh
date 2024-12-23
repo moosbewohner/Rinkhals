@@ -3,11 +3,13 @@ function log() {
     echo "`date`: ${*}" >> /rinkhals.log
 }
 function kill_by_name() {
+    # ls -1 /proc | grep -E '^[0-9]+$' | grep -v $$ | sort -nr | xargs -I {} sh -c "echo {}: \`cat /proc/{}/cmdline 2> /dev/null\`" | grep moonraker.py | grep -v grep | head -n 1
+
     for i in `ls /proc/*/cmdline 2> /dev/null`; do
-        PID=`echo $i | awk -F'/' '{print $3}'`
         CMDLINE=`cat $i` 2>/dev/null
 
         if echo "$CMDLINE" | grep -q "${*}"; then
+            PID=`echo $i | awk -F'/' '{print $3}'`
             log "Killing $PID ($CMDLINE)"
             kill -9 $PID
         fi
