@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # From a Windows machine:
-#   docker run --rm -it -v .\build:/build -v .\files:/files ghcr.io/jbatonnet/rinkjals/build /build/swu-tools/ssh/build-swu.sh
+#   docker run --rm -it -v .\build:/build -v .\files:/files ghcr.io/jbatonnet/rinkhals/build /build/swu-tools/ssh/build-swu.sh
 
 set -e
 
@@ -10,23 +10,12 @@ set -e
 mkdir -p /tmp/update_swu
 rm -rf /tmp/update_swu/*
 
-mkdir -p /tmp/update_swu/etc/dropbear
-mkdir -p /tmp/update_swu/lib
-mkdir -p /tmp/update_swu/usr/lib
-mkdir -p /tmp/update_swu/usr/libexec
-mkdir -p /tmp/update_swu/usr/sbin
-mkdir -p /tmp/update_swu/usr/share/scripts
-
 cp /build/swu-tools/ssh/update.sh /tmp/update_swu/update.sh
-cp /files/4-rinkhals/etc/dropbear/dropbear_rsa_host_key /tmp/update_swu/etc/dropbear/dropbear_rsa_host_key
-cp /files/1-buildroot/lib/ld-linux-armhf.so.3 /tmp/update_swu/lib/ld-linux-armhf.so.3
-cp /files/1-buildroot/lib/libc.so.6 /tmp/update_swu/lib/libc.so.6
-cp /files/1-buildroot/usr/lib/libcrypt.so.2 /tmp/update_swu/usr/lib/libcrypt.so.2
-cp /files/1-buildroot/usr/lib/libcrypto.so.3 /tmp/update_swu/usr/lib/libcrypto.so.3
-cp /files/1-buildroot/usr/lib/libssl.so.3 /tmp/update_swu/usr/lib/libssl.so.3
-cp /files/1-buildroot/usr/libexec/sftp-server /tmp/update_swu/usr/libexec/sftp-server
-cp /files/1-buildroot/usr/sbin/dropbear /tmp/update_swu/usr/sbin/dropbear
-cp /build/swu-tools/ssh/sftp-server /tmp/update_swu/usr/share/scripts/sftp-server
+cp /files/4-rinkhals/etc/dropbear/dropbear_rsa_host_key /tmp/update_swu/dropbear_rsa_host_key
+cp /files/1-buildroot/usr/lib/libcrypto.so.1.1 /tmp/update_swu/libcrypto.so.1.1
+cp /files/1-buildroot/usr/lib/libssl.so.1.1 /tmp/update_swu/libssl.so.1.1
+cp /files/1-buildroot/usr/libexec/sftp-server /tmp/update_swu/sftp-server
+cp /files/1-buildroot/usr/sbin/dropbear /tmp/update_swu/dropbear
 
 
 # Create the setup.tar.gz

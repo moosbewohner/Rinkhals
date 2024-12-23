@@ -20,11 +20,10 @@ export RCLONE_CONFIG_KOBRA_PASS=`rclone obscure "rockchip"`
 mkdir -p /tmp/target
 rm -rf /tmp/target/*
 
-cp -r /files/*.* /tmp/target
-echo "dev" > /tmp/target/.version
+cp -pr /files/*.* /tmp/target
 
 rclone -v sync --absolute \
-    --filter "- /*.log" --filter "- /update.sh" --filter "+ /*" --filter "- *" \
+    --filter "- /*.log" --filter "- /update.sh" --filter "- /.version" --filter "+ /*" --filter "- *" \
     /tmp/target Kobra:/useremain/rinkhals
 
 
@@ -69,6 +68,6 @@ echo "dev" > /tmp/target/.version
 # Push to the Kobra
 rclone -v sync --absolute \
     --filter "- *.log" --filter "- *.pyc" --filter "- __pycache__/**" --filter "- /home/rinkhals/printer_data/**" \
-    --filter "+ /*.*" --filter "+ /bin/**" --filter "+ /sbin/**" --filter "+ /usr/**" --filter "+ /etc/**" --filter "+ /home/**" --filter "+ /lib/**" --filter "- *.log" \
+    --filter "+ /*.*" --filter "+ /bin/**" --filter "+ /sbin/**" --filter "+ /usr/**" --filter "+ /etc/**" --filter "+ /home/**" --filter "+ /lib/**" --filter "+ /.version" \
     --filter "- *" \
     /tmp/target Kobra:/useremain/rinkhals/dev

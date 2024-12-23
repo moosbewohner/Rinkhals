@@ -29,9 +29,6 @@ if [ ! -d /useremain/rinkhals/$RINKHALS_VERSION ]; then
     exit 1
 fi
 
-rm -rf /useremain/rinkhals/.current 2> /dev/null
-ln -s /useremain/rinkhals/$RINKHALS_VERSION /useremain/rinkhals/.current
-
 cd /useremain/rinkhals/$RINKHALS_VERSION
 
 chmod +x ./start.sh

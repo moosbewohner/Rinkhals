@@ -1,9 +1,7 @@
-# docker build -t ghcr.io/jbatonnet/rinkjals/buildroot -f build/1-buildroot/Dockerfile build/1-buildroot
-# docker push ghcr.io/jbatonnet/rinkjals/buildroot
+# docker build -t ghcr.io/jbatonnet/rinkhals/buildroot -f build/1-buildroot/Dockerfile build/1-buildroot
+# docker push ghcr.io/jbatonnet/rinkhals/buildroot
 
-# docker run --rm -it -v .\build\buildroot:/config -v .\build\target:/output ghcr.io/jbatonnet/rinkjals/buildroot
-# docker run --rm -it -v .\build\buildroot:/config -v .\build\target:/output ghcr.io/jbatonnet/rinkjals/buildroot ./edit-config.sh
-# docker run --rm -it -v .\build\buildroot:/config -v .\build\target:/output ghcr.io/jbatonnet/rinkjals/buildroot ./build-target.sh
+# docker run --rm -it -v .\build\buildroot:/config -v .\build\target:/output ghcr.io/jbatonnet/rinkhals/buildroot
 
 FROM debian:12.8
 
@@ -17,26 +15,10 @@ RUN apt update && \
 RUN locale-gen en_US.utf8
 
 WORKDIR /buildroot
-RUN git clone https://gitlab.com/buildroot.org/buildroot.git --depth=1 --branch=2024.08.x /buildroot
+RUN git clone https://gitlab.com/buildroot.org/buildroot.git --depth=1 --branch=2023.02.6 /buildroot
 
-COPY *.sh /buildroot
-RUN chmod +x /buildroot/*.sh
+COPY gcc-target.patch /buildroot/
+RUN git apply gcc-target.patch
 
-# Configuration redirect
-RUN mkdir /config
-RUN ln -s /config/.config .config
-VOLUME /config
-
-# Download cache redirect
-RUN mkdir /cache
-RUN ln -s /cache dl
-VOLUME /cache
-
-# Output redirect
-RUN mkdir /output
-# RUN ln -s /output output
-ENV O=/output
-
-#VOLUME /buildroot/output
-
-ENV FORCE_UNSAFE_CONFIGURE=1
+COPY .config /buildroot/
+COPY prepare-final.sh /buildroot/

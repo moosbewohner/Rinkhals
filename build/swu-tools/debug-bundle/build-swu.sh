@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # From a Windows machine:
-#   docker run --rm -it -v .\build:/build -v .\files:/files ghcr.io/jbatonnet/rinkjals/build /build/swu-tools/debug-bundle/build-swu.sh
+#   docker run --rm -it -v .\build:/build -v .\files:/files ghcr.io/jbatonnet/rinkhals/build /build/swu-tools/debug-bundle/build-swu.sh
 
 set -e
 

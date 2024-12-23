@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Run from Docker:
-#   docker run --rm -it -v .\build:/build -v .\files:/files ghcr.io/jbatonnet/rinkjals/build /build/2-external/get-external.sh
+#   docker run --rm -it -v .\build:/build -v .\files:/files ghcr.io/jbatonnet/rinkhals/build /build/2-external/get-external.sh
 
 mkdir /work
 cd /work

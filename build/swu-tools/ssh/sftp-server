@@ -1,5 +1,0 @@
-TMP_TOOL_PATH="/tmp/swu-ssh"
-
-LD_LIBRARY_PATH=$TMP_TOOL_PATH/lib:$TMP_TOOL_PATH/usr/lib \
-    $TMP_TOOL_PATH/lib/ld-linux-armhf.so.3 \
-    $TMP_TOOL_PATH/usr/libexec/sftp-server

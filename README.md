@@ -135,12 +135,12 @@ If you want to fully build this firmware yourself and avoid using the prebuilt b
 - Layer 2: External apps (**files/2-external**)
     - Update git submodules
     - Build **files/2-external/Dockerfile** if you want
-    - `docker run --rm -it -v .\build:/build -v .\files:/files ghcr.io/jbatonnet/rinkjals/build /build/2-external/get-external.sh`
+    - `docker run --rm -it -v .\build:/build -v .\files:/files ghcr.io/jbatonnet/rinkhals/build /build/2-external/get-external.sh`
 
 - Layer 3: Python packages for Moonraker (**files/3-python**)
     - Build **files/3-python/Dockerfile** if you want
     - `docker run --privileged --rm tonistiigi/binfmt --install all`
-    - `docker run --rm -it -v .\build:/build -v .\files:/files ghcr.io/jbatonnet/rinkjals/python /build/3-python/copy-output.sh`
+    - `docker run --rm -it -v .\build:/build -v .\files:/files ghcr.io/jbatonnet/rinkhals/python /build/3-python/copy-output.sh`
 
 If you want to quickly iterate on development, a quick deployment method is provided:
 

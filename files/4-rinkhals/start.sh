@@ -1,21 +1,31 @@
-function log() {
-    echo "${*}"
-    echo "`date`: ${*}" >> /useremain/rinkhals/.current/rinkhals.log
+msleep() {
+    usleep $(($1 * 1000))
 }
-function kill_by_name() {
-    for i in `ls /proc/*/cmdline 2> /dev/null`; do
-        CMDLINE=`cat $i` 2>/dev/null
+beep() {
+    echo 1 > /sys/class/pwm/pwmchip0/pwm0/enable
+    usleep $((${*}*1000))
+    echo 0 > /sys/class/pwm/pwmchip0/pwm0/enable
+}
+log() {
+    echo "${*}"
 
-        if echo "$CMDLINE" | grep -q "${*}"; then
-            PID=`echo $i | awk -F'/' '{print $3}'`
-            log "Killing $PID ($CMDLINE)"
-            kill -9 $PID
-        fi
+    mkdir -p $RINKHALS_ROOT/logs
+    echo "`date`: ${*}" >> $RINKHALS_ROOT/logs/rinkhals.log
+}
+kill_by_name() {
+    PIDS=`ps | grep "$1" | grep -v grep | awk '{print $1}'`
+
+    for PID in `echo "$PIDS"`; do
+        CMDLINE=`cat /proc/$PID/cmdline` 2>/dev/null
+
+        log "Killing $PID ($CMDLINE)"
+        kill -9 $PID
     done
 }
-function kill_by_port() {
+kill_by_port() {
     XPORT=`printf "%04X" ${*}`
-    INODE=`cat /proc/net/tcp | grep 00000000:$XPORT | awk '/.*:.*:.*/{print $10;}'` # Port 2222
+    INODE=`cat /proc/net/tcp | grep 00000000:$XPORT | awk '/.*:.*:.*/{print $10;}'`
+
     if [[ "$INODE" != "" ]]; then
         PID=`ls -l /proc/*/fd/* 2> /dev/null | grep "socket:\[$INODE\]" | awk -F'/' '{print $3}'`
         CMDLINE=`cat /proc/$PID/cmdline`
@@ -24,29 +34,62 @@ function kill_by_port() {
         kill -9 $PID
     fi
 }
-function check_by_name() {
-    for i in `ls /proc/*/cmdline 2> /dev/null`; do
-        CMDLINE=`cat $i` 2>/dev/null
+assert_by_name() {
+    PIDS=`ps | grep "$1" | grep -v grep | awk '{print $1}'`
 
-        if echo "$CMDLINE" | grep -q "${*}"; then
-            return
-        fi
-    done
-
-    log "/!\ ${*} should be running but it's not"
-    quit
+    if [ "$PIDS" == "" ]; then
+        log "/!\ ${*} should be running but it's not"
+        quit
+    fi
 }
-function quit() {
-    cd /userdata/app/gk
-    LD_LIBRARY_PATH=/userdata/app/gk:$LD_LIBRARY_PATH ./K3SysUi &
+check_by_port() {
+    XPORT=`printf "%04X" ${*}`
+    INODE=`cat /proc/net/tcp | grep 00000000:$XPORT | awk '/.*:.*:.*/{print $10;}'` # Port 2222
+    if [[ "$INODE" != "" ]]; then
+        return 1
+    fi
+
+    return 0
+}
+quit() {
+    echo
+    log "/!\\ Startup failed, stopping Rinkhals..."
+
+    beep 500
+    msleep 500
+    beep 500
+
+    ./stop.sh
+    touch /useremain/rinkhals/.disable-rinkhals
+
     exit 1
 }
 
 export TZ=UTC
 ntpclient -s -h pool.ntp.org > /dev/null # Try to sync local time before starting
 
+KOBRA_VERSION=`cat /useremain/dev/version`
+RINKHALS_ROOT=`dirname $(realpath $0)`
+RINKHALS_VERSION=`cat $RINKHALS_ROOT/.version`
+
+if [ "$KOBRA_VERSION" != "2.3.5.3" ]; then
+    log "Your printer has firmware $KOBRA_VERSION. This Rinkhals version is only compatible with Kobra firmware 2.3.5.3, stopping startup"
+    exit 1
+fi
+
+cd $RINKHALS_ROOT
+rm -rf /useremain/rinkhals/.current 2> /dev/null
+ln -s $RINKHALS_ROOT /useremain/rinkhals/.current
+
+mkdir -p ./logs
+
+if [ ! -f /tmp/rinkhals-bootid ]; then
+    echo $RANDOM > /tmp/rinkhals-bootid
+fi
+BOOT_ID=`cat /tmp/rinkhals-bootid`
+
 log
-log Starting Rinkhals...
+log "[$BOOT_ID] Starting Rinkhals..."
 
 echo
 echo "          ██████████              "
@@ -66,10 +109,6 @@ echo "    ██░░░░░░░░░░░░░░░░░░███�
 echo "      ██████████████████    ██    "
 echo
 
-export KOBRA_VERSION=`cat /useremain/dev/version`
-export RINKHALS_VERSION=`cat .version`
-export RINKHALS_ROOT=`pwd`
-
 log " --------------------------------------------------"
 log "| Kobra firmware: $KOBRA_VERSION"
 log "| Rinkhals version: $RINKHALS_VERSION"
@@ -77,126 +116,84 @@ log "| Rinkhals root: $RINKHALS_ROOT"
 log " --------------------------------------------------"
 echo
 
-if [ "$KOBRA_VERSION" != "2.3.5.3" ]; then
-    log "This Rinkhals version is only compatible with Kobra firmware 2.3.5.3, stopping startup"
-    exit 1
-fi
-
 REMOTE_MODE=`cat /useremain/dev/remote_ctrl_mode`
 if [ "$REMOTE_MODE" != "lan" ]; then
     log "LAN mode is disabled, some functions might not work properly"
 fi
 
-export INTERPRETER=$RINKHALS_ROOT/lib/ld-linux-armhf.so.3
+touch /useremain/rinkhals/.disable-rinkhals
 
 
 ################
-log "> Preparing startup..."
+log "> Stopping Anycubic apps..."
 
-killall K3SysUi
 kill_by_name K3SysUi
-
-touch /useremain/rinkhals/.disable-rinkhals
+kill_by_name gkcam
+kill_by_name gkapi
+kill_by_name gklib
 
 
 ################
 log "> Fixing permissions..."
 
-chmod +x $INTERPRETER 2> /dev/null
 chmod +x ./*.sh 2> /dev/null
+chmod +x ./lib/ld-* 2> /dev/null
 chmod +x ./bin/* 2> /dev/null
 chmod +x ./sbin/* 2> /dev/null
 chmod +x ./usr/bin/* 2> /dev/null
 chmod +x ./usr/sbin/* 2> /dev/null
 chmod +x ./usr/libexec/* 2> /dev/null
 chmod +x ./usr/share/scripts/* 2> /dev/null
+chmod +x ./usr/libexec/gcc/arm-buildroot-linux-uclibcgnueabihf/11.4.0/* 2> /dev/null
 
 
 ################
-log "> Starting SSH..."
+log "> Preparing overlay..."
 
-kill_by_port 2222
+umount -l /userdata/app/gk/printer_data/gcodes 2> /dev/null
+umount -l /userdata/app/gk/printer_data 2> /dev/null
 
-umount -l /usr/libexec 2> /dev/null
-mount --bind $RINKHALS_ROOT/usr/share/scripts /usr/libexec
+umount -l /sbin 2> /dev/null
+umount -l /bin 2> /dev/null
+umount -l /usr 2> /dev/null
+umount -l /lib 2> /dev/null
 
-LD_LIBRARY_PATH=$RINKHALS_ROOT/lib:$RINKHALS_ROOT/usr/lib \
-    $INTERPRETER ./usr/sbin/dropbear -F -E -a -p 2222 -P /tmp/dropbear_debug.pid -r ./etc/dropbear/dropbear_rsa_host_key \
-    1>> ./dropbear_debug.log 2>> ./dropbear_debug.log &
+mount -o ro --bind ./lib /lib
+mount --bind ./usr /usr
+mount -o ro --bind ./bin /bin
+mount -o ro --bind ./sbin /sbin
 
-DROPBEAR_DEBUG_PID=$!
-sleep 1
 
-if [[ "$(cat /proc/net/tcp | grep 00000000:08AE)" == "" ]]; then # 2222 = x8AE
-    log "/!\ SSH backup did not start properly"
-    quit
-fi
+################
+log "> Starting SSH & ADB..."
 
-if [[ "$(cat /proc/net/tcp | grep 00000000:0016)" != "" ]]; then # 22 = x16
+if [ "$(cat /proc/net/tcp | grep 00000000:0016)" != "" ]; then # 22 = x16
     log "/!\ SSH is already running"
 else
-    LD_LIBRARY_PATH=$RINKHALS_ROOT/lib:$RINKHALS_ROOT/usr/lib \
-        $INTERPRETER ./usr/sbin/dropbear -F -E -a -p 22 -P /tmp/dropbear.pid -r ./etc/dropbear/dropbear_rsa_host_key \
-        1>> ./dropbear.log 2>> ./dropbear.log &
+    dropbear -F -E -a -p 22 -P /tmp/dropbear.pid -r /usr/local/etc/dropbear/dropbear_rsa_host_key >> ./logs/dropbear.log 2>&1 &
+    msleep 500
 
-    sleep 1
-    if [[ "$(cat /proc/net/tcp | grep 00000000:0016)" == "" ]]; then # 22 = x16
+    if [ "$(cat /proc/net/tcp | grep 00000000:0016)" == "" ]; then
         log "/!\ SSH did not start properly"
         quit
     fi
 fi
 
+# if [ "$(cat /proc/net/tcp | grep 00000000:15B3)" != "" ]; then # 5555 = x15B3
+#     log "/!\ ADB is already running"
+# else
+#     adbd >> ./logs/adbd.log &
+#     msleep 500
 
-################
-log "> Starting ADB..."
-
-if [[ "$(cat /proc/net/tcp | grep 00000000:15B3)" != "" ]]; then # 5555 = x15B3
-    log "/!\ ADB is already running"
-else
-    /usr/bin/adbd >> ./adbd.log &
-    sleep 1
-
-    if [[ "$(cat /proc/net/tcp | grep 00000000:08AE)" == "" ]]; then # 5555 = x15B3
-        log "/!\ ADB did not start properly"
-        quit
-    fi
-fi
+#     if [ "$(cat /proc/net/tcp | grep 00000000:15B3)" == "" ]; then
+#         log "/!\ ADB did not start properly"
+#         quit
+#     fi
+# fi
 
 
 ################
-log "> Stopping Klipper..."
-
-killall gkcam
-killall gkapi
-killall gklib
-
-
-################
-log "> Preparing chroot..."
-
-mkdir -p ./proc
-mkdir -p ./sys
-mkdir -p ./dev
-mkdir -p ./run
-mkdir -p ./tmp
-mkdir -p ./userdata
-mkdir -p ./useremain
-
-umount -l ./proc 2> /dev/null
-umount -l ./sys 2> /dev/null
-umount -l ./dev 2> /dev/null
-umount -l ./run 2> /dev/null
-umount -l ./tmp 2> /dev/null
-umount -l ./userdata 2> /dev/null
-umount -l ./useremain 2> /dev/null
-
-mount -t proc /proc ./proc
-mount -t sysfs /sys ./sys
-mount --rbind /dev ./dev
-mount --rbind /run ./run
-mount --bind /tmp ./tmp
-mount --bind /userdata ./userdata
-mount --bind /useremain ./useremain
+log "> Preparing mounts..."
 
 mkdir -p /userdata/app/gk/printer_data
 umount -l /userdata/app/gk/printer_data 2> /dev/null
@@ -206,42 +203,115 @@ mkdir -p /userdata/app/gk/printer_data/gcodes
 umount -l /userdata/app/gk/printer_data/gcodes 2> /dev/null
 mount --bind /useremain/app/gk/gcodes /userdata/app/gk/printer_data/gcodes
 
-chmod +x chroot-start.sh
-chroot $(pwd) /bin/ash chroot-start.sh
+# TODO: Mount config directory to something persistent
 
 
 ################
-log "> Restarting Klipper..."
+log "> Starting Moonraker..."
+
+kill_by_name moonraker.py
+HOME=/userdata/app/gk python /usr/share/moonraker/moonraker/moonraker.py >> ./logs/moonraker.log 2>&1 &
+assert_by_name moonraker.py
+
+kill_by_name moonraker-proxy.py
+python /usr/share/scripts/moonraker-proxy.py >> ./logs/moonraker.log 2>&1 &
+assert_by_name moonraker-proxy.py
+
+# python -m /usr/share/octoapp/moonraker_octoapp "ewogICAgJ0tsaXBwZXJDb25maWdGb2xkZXInOiAnL3VzZXJlbWFpbi9yaW5raGFscy9xdWljay1kZXBsb3kvaG9tZS9yaW5raGFscy9wcmludGVyX2RhdGEvY29uZmlnJywKICAgICdNb29ucmFrZXJDb25maWdGaWxlJzogJy91c2VyZW1haW4vcmlua2hhbHMvcXVpY2stZGVwbG95L2hvbWUvcmlua2hhbHMvcHJpbnRlcl9kYXRhL2NvbmZpZy9tb29ucmFrZXIuY29uZicsCiAgICAnS2xpcHBlckxvZ0ZvbGRlcic6ICcvdXNlcmVtYWluL3JpbmtoYWxzL3F1aWNrLWRlcGxveS9ob21lL3JpbmtoYWxzL3ByaW50ZXJfZGF0YS9sb2dzJywKICAgICdMb2NhbEZpbGVTdG9yYWdlUGF0aCc6ICcvdXNlcmVtYWluL3JpbmtoYWxzL3F1aWNrLWRlcGxveS9ob21lL3JpbmtoYWxzL29jdG9hcHAnLAogICAgJ0lzT2JzZXJ2ZXInIDogZmFsc2UKfQ=="
+
+# {
+#     'KlipperConfigFolder': '/useremain/rinkhals/quick-deploy/home/rinkhals/printer_data/config',
+#     'MoonrakerConfigFile': '/useremain/rinkhals/quick-deploy/home/rinkhals/printer_data/config/moonraker.conf',
+#     'KlipperLogFolder': '/useremain/rinkhals/quick-deploy/home/rinkhals/printer_data/logs',
+#     'LocalFileStoragePath': '/useremain/rinkhals/quick-deploy/home/rinkhals/octoapp',
+#     'IsObserver' : false
+# }
+
+
+################
+log "> Starting nginx..."
+
+kill_by_name nginx
+mkdir -p /var/log/nginx
+mkdir -p /var/cache/nginx
+
+nginx -c /usr/local/etc/nginx/nginx.conf &
+
+
+################
+log "> Starting mjpg-streamer..."
+
+if [ -e /dev/video10 ]; then
+    kill_by_name gkcam
+    kill_by_name mjpg_streamer
+
+    sleep 1
+
+    mjpg_streamer -i "/usr/lib/mjpg-streamer/input_uvc.so -d /dev/video10 -n" -o "/usr/lib/mjpg-streamer/output_http.so -w /usr/share/mjpg-streamer/www"  >> ./logs/mjpg_streamer.log 2>&1 &
+else
+    log "Webcam /dev/video10 not found. mjpg-streamer will not start"
+fi
+
+
+################
+log "> Waiting for everything to start..."
+
+n=30
+while [ "$n" != "0" ]; do
+    n=$(( $n - 1 ))
+    sleep 1
+
+    ERROR=0
+    
+    for PORT in 80 4408 4409 7125 8080; do
+        if [ "$PORT" == "8080" ] && [ ! -e /dev/video10 ]; then
+            break
+        fi
+
+        check_by_port $PORT
+
+        if [ "$?" == "0" ]; then
+            ERROR=1
+            break
+        fi
+    done
+
+    if [ "$ERROR" == "0" ]; then
+        break
+    fi
+done
+
+if [ "$n" == "0" ]; then
+    log "/!\ Timeout waiting for everything to start"
+    quit
+fi
+
+
+################
+log "> Restarting Anycubic apps..."
 
 cd /userdata/app/gk
+export LD_LIBRARY_PATH=/userdata/app/gk:$LD_LIBRARY_PATH
 
-LD_LIBRARY_PATH=/userdata/app/gk:$LD_LIBRARY_PATH \
-    /userdata/app/gk/gklib -a /tmp/unix_uds1 /userdata/app/gk/printer_data/config/printer.cfg \
-    &> $RINKHALS_ROOT/gklib.log &
+./gklib -a /tmp/unix_uds1 printer_data/config/printer.cfg &> $RINKHALS_ROOT/logs/gklib.log &
 
-sleep 2
+sleep 1
 
-LD_LIBRARY_PATH=/userdata/app/gk:$LD_LIBRARY_PATH \
-    /userdata/app/gk/gkapi \
-    &> $RINKHALS_ROOT/gkapi.log &
-
-LD_LIBRARY_PATH=/userdata/app/gk:$LD_LIBRARY_PATH \
-    /userdata/app/gk/K3SysUi \
-    &> $RINKHALS_ROOT/gkui.log &
+./gkapi &> $RINKHALS_ROOT/logs/gkapi.log &
+./K3SysUi &> $RINKHALS_ROOT/logs/gkui.log &
 
 cd $RINKHALS_ROOT
 
 sleep 1
 
-check_by_name gklib
-check_by_name gkapi
+assert_by_name gklib
+assert_by_name gkapi
 
 
 ################
 log "> Cleaning up..."
 
 rm /useremain/rinkhals/.disable-rinkhals
-kill -9 $DROPBEAR_DEBUG_PID
 
 echo
 log "Rinkhals started"

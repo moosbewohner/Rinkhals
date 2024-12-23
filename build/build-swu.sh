@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # From a Windows machine:
-#   docker run --rm -it -e VERSION="yyyymmdd_nn" -v .\build:/build -v .\files:/files ghcr.io/jbatonnet/rinkjals/build /build/build-swu.sh
+#   docker run --rm -it -e VERSION="yyyymmdd_nn" -v .\build:/build -v .\files:/files ghcr.io/jbatonnet/rinkhals/build /build/build-swu.sh
 
 set -e
 
@@ -35,27 +35,70 @@ else
 fi
 
 
-
 # Recreate symbolic links to save space and remove .pyc files
-#echo "Optimizing size..."
+echo "Optimizing size..."
 
-# FIXME: Symlinks are not extracted properly
-# cd /tmp/update_swu/rinkhals
-# for FILE in `find -type f -name "*.so*"`; do
-#     FILES=`ls -al $FILE*`
-#     SIZE=`echo "$FILES" | head -n 1 | awk '{print $5}'`
-#     CANONICAL=`echo "$FILES" | awk -v SIZE="$SIZE" '{ if ($5 == SIZE) { print $NF } }' | tail -n 1`
+cd /tmp/update_swu/rinkhals
 
-#     if [ "$FILE" != "$CANONICAL" ]; then
-#         #echo "$FILE ($SIZE bytes) > $CANONICAL"
+for FILE in `find -type f -name "*.so*"`; do
+    FILES=`ls -al $FILE*`
+    SIZE=`echo "$FILES" | head -n 1 | awk '{print $5}'`
+    CANONICAL=`echo "$FILES" | awk -v SIZE="$SIZE" '{ if ($5 == SIZE) { print $NF } }' | tail -n 1`
 
-#         rm $FILE
-#         ln -s $CANONICAL $FILE
-#     fi
-# done
+    if [ "$FILE" != "$CANONICAL" ]; then
+        #RELPATH=`python3 -c "import os.path; print(os.path.relpath('$CANONICAL', '$(dirname $FILE)'))"`
+        #echo "$FILE ($SIZE bytes) > $(basename $CANONICAL)"
 
-# FIXME: Seems to break moonraker...
-#find /tmp/update_swu/rinkhals -name '*.pyc' -type f -delete
+        rm $FILE
+        ln -s $(basename $CANONICAL) $FILE
+    fi
+done
+
+BUSYBOX_SIZE=`ls -al ./bin/busybox | awk '{print $5}'`
+
+for FILE in `find ./bin -type f | grep -v busybox`; do
+    SIZE=`ls -al $FILE | awk '{print $5}'`
+
+    if [ "$SIZE" -eq "$BUSYBOX_SIZE" ]; then
+        #echo "$FILE ($SIZE bytes) > busybox"
+        
+        rm $FILE
+        ln -s busybox $FILE
+    fi
+done
+
+for FILE in `find ./sbin -type f`; do
+    SIZE=`ls -al $FILE | awk '{print $5}'`
+
+    if [ "$SIZE" -eq "$BUSYBOX_SIZE" ]; then
+        #echo "$FILE ($SIZE bytes) > busybox"
+
+        rm $FILE
+        ln -s ../bin/busybox $FILE
+    fi
+done
+
+for FILE in `find ./usr/bin -type f`; do
+    SIZE=`ls -al $FILE | awk '{print $5}'`
+
+    if [ "$SIZE" -eq "$BUSYBOX_SIZE" ]; then
+        #echo "$FILE ($SIZE bytes) > busybox"
+
+        rm $FILE
+        ln -s ../../bin/busybox $FILE
+    fi
+done
+
+for FILE in `find ./usr/sbin -type f`; do
+    SIZE=`ls -al $FILE | awk '{print $5}'`
+
+    if [ "$SIZE" -eq "$BUSYBOX_SIZE" ]; then
+        #echo "$FILE ($SIZE bytes) > busybox"
+
+        rm $FILE
+        ln -s ../../bin/busybox $FILE
+    fi
+done
 
 
 # Create the setup.tar.gz
