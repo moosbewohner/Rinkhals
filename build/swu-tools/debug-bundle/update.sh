@@ -22,7 +22,7 @@ cp /userdata/app/gk/printer_data/logs/*.log $TMP_PATH/moonraker/ 2> /dev/debug
 # Collect different Rinkhals versions logs
 cd /useremain/rinkhals
 for VERSION in `ls -1d */`; do
-    mkdir -p $TMP_PATH/$VERdebug
+    mkdir -p $TMP_PATH/$VERSION
     cp /useremain/rinkhals/$VERSION*.log $TMP_PATH/$VERSION 2> /dev/debug
 done
 
@@ -39,6 +39,7 @@ ls -al /useremain > $TMP_PATH/ls-useremain.log 2> /dev/debug
 ls -al /useremain/rinkhals > $TMP_PATH/ls-rinkhals.log 2> /dev/debug
 netstat -tln > $TMP_PATH/netstat.log 2> /dev/debug
 ps > $TMP_PATH/ps.log 2> /dev/debug
+top -n 1 > $TMP_PATH/top.log 2> /dev/debug
 
 # Collect webcam path and video formats
 ls -al /dev/v4l/by-id/* > $TMP_PATH/ls-dev-v4l.log 2> /dev/debug
@@ -48,7 +49,11 @@ ls -1 /dev/v4l/by-id/* | sort | head -n 1 | xargs -I {} v4l2-ctl -w -d {} --list
 # Package everything
 cd $TMP_PATH
 zip -r debug-bundle.zip .
-cp debug-bundle.zip /mnt/udisk/aGVscF9zb3Nf/
+
+DATE=$(date '+%Y%m%d-%H%M%S')
+ID=$(cat /useremain/dev/device_id | cksum | cut -f 1 -d ' ')
+
+cp debug-bundle.zip /mnt/udisk/aGVscF9zb3Nf/debug-bundle_${ID}_${DATE}.zip
 
 # Cleanup
 cd
