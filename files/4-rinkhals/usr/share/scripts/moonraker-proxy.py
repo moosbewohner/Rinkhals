@@ -4,11 +4,17 @@ import json
 import uuid
 import time
 import os
+from datetime import datetime
 
 import aiohttp
 from aiohttp import web
 
 import paho.mqtt.client as paho
+
+
+
+def log(message):
+    print(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' [moonraker-proxy] ' + message)
 
 
 
@@ -31,6 +37,10 @@ CORS_HEADERS = {
 }
 
 
+
+mqtt_print_report = False
+mqtt_print_error = None
+
 # MQTT call
 async def mqtt_printfile(file):
     payload = """{{
@@ -45,10 +55,51 @@ async def mqtt_printfile(file):
         }}
     }}""".format(uuid.uuid4(), round(time.time() * 1000), file)
 
-    client = paho.Client(client_id = "", userdata = None, protocol = paho.MQTTv5)
+    global mqtt_print_report
+    global mqtt_print_error
+
+    mqtt_print_report = False
+    mqtt_print_error = None
+
+    def mqtt_on_connect(client, userdata, flags, reason_code, properties):
+        client.subscribe('anycubic/anycubicCloud/v1/printer/public/20024/' + PRINTER_ID + '/print/report')
+        client.publish('anycubic/anycubicCloud/v1/slicer/printer/20024/' + PRINTER_ID + '/print', payload=payload, qos=1)
+
+    def mqtt_on_message(client, userdata, msg):
+        global mqtt_print_report
+        global mqtt_print_error
+
+        if DEBUG:
+            log('Received MQTT print report: ' + str(msg.payload))
+
+        payload = json.loads(msg.payload)
+        state = str(payload['state'])
+        log('Received MQTT print state: ' + state)
+
+        if state == 'failed':
+            mqtt_print_error = str(payload['msg'])
+            log('Failed MQTT print: ' + mqtt_print_error)
+
+        mqtt_print_report = True
+
+    client = paho.Client(paho.CallbackAPIVersion.VERSION2, protocol = paho.MQTTv5)
+    client.on_connect = mqtt_on_connect
+    client.on_message = mqtt_on_message
+
     client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
     client.connect(PRINTER_IP, 2883)
-    client.publish('anycubic/anycubicCloud/v1/slicer/printer/20024/' + PRINTER_ID + '/print', payload=payload, qos=1)
+
+    n = 0
+    while not mqtt_print_report:
+        n = n + 1
+        if n == 50:
+            log('Timeout trying to print ' + file)
+            return 'Timeout trying to print ' + file
+
+        client.loop(timeout = 0.1)
+
+    client.disconnect()
+    return mqtt_print_error
 
 
 
@@ -58,7 +109,7 @@ async def http_options_handler(request):
         return aiohttp.web.json_response({"message": "Accept all hosts"}, headers=CORS_HEADERS)
 async def http_handler(request):
     if DEBUG:
-        print('[moonraker-proxy] Proxying web request "{0} {1}"'.format(request.method, request.raw_path))
+        log('Proxying web request "{0} {1}"'.format(request.method, request.raw_path))
 
     async with aiohttp.ClientSession() as session:
         data = await request.read()
@@ -74,7 +125,7 @@ async def http_handler(request):
                     data_str = data_str[:200].replace('true', 'false') + data_str[200:]
                     data = data_str.encode('utf-8')
 
-                    print('[moonraker-proxy] Intecepted web request with print "{0} {1}", replacing with MQTT call...'.format(request.method, request.raw_path))
+                    log('Intecepted web request with print "{0} {1}", replacing with MQTT call...'.format(request.method, request.raw_path))
 
                     file_to_print = data_str[data_str.index('filename="') + 10:]
                     file_to_print = file_to_print[:file_to_print.index('"')]
@@ -83,8 +134,10 @@ async def http_handler(request):
             body = await response.read()
 
             if file_to_print:
-                await asyncio.sleep(1)
-                await mqtt_printfile(file_to_print)
+                await asyncio.sleep(0.5)
+                error = await mqtt_printfile(file_to_print)
+                if error:
+                    return aiohttp.web.Response(status = 400, body = '[moonraker-proxy] ' + str(error))
 
             return aiohttp.web.Response(status = response.status, body = body, headers = CORS_HEADERS)
 
@@ -109,22 +162,22 @@ async def websocket_handler(request):
                             return
 
                         if DEBUG:
-                            print('[moonraker-proxy] Recevied new message')
+                            print('Recevied new message')
 
                         data = json.loads(msg.data)
                         if "method" in data:
                             
                             if data["method"] == "printer.print.start" and REMOTE_MODE == 'lan':
-                                print('[moonraker-proxy] Intercepted "printer.print.start", replacing with MQTT call...')
+                                log('Intercepted "printer.print.start", replacing with MQTT call...')
                                 mqtt_printfile(data['params']['filename'])
                                 continue
 
                             elif data["method"] == "server.files.metadata":
-                                print('[moonraker-proxy] Intercepted "server.files.metadata", replacing path...')
+                                log('Intercepted "server.files.metadata", replacing path...')
                                 data['params']['filename'] = data['params']['filename'].replace('/useremain/app/gk/gcodes/', '')
 
                             elif DEBUG:
-                                print('[moonraker-proxy] Proxying WS message "{0}}"...'.format(data["method"]))
+                                log('Proxying WS message "{0}}"...'.format(data["method"]))
 
                         await backend_ws.send(json.dumps(data))
 
@@ -152,7 +205,7 @@ async def start_server():
     runner = aiohttp.web.AppRunner(app)
     await runner.setup()
 
-    print('[moonraker-proxy] Listening on port {0}'.format(PROXY_PORT))
+    log('Listening on port {0}'.format(PROXY_PORT))
 
     server = aiohttp.web.TCPSite(runner, "0.0.0.0", PROXY_PORT)
     await server.start()
@@ -164,7 +217,7 @@ if __name__ == "__main__":
         with open('/useremain/dev/remote_ctrl_mode', 'r') as f:
             REMOTE_MODE = f.read().strip()
 
-    print('[moonraker-proxy] Remote mode: {0}'.format(REMOTE_MODE))
+    log('Remote mode: {0}'.format(REMOTE_MODE))
 
     # Retrieve printer information
     if not MQTT_USERNAME or not MQTT_PASSWORD:
@@ -183,9 +236,11 @@ if __name__ == "__main__":
         with open('/useremain/dev/device_id', 'r') as f:
             PRINTER_ID = f.read().strip()
 
-    print('[moonraker-proxy] Printer ID: {0}'.format(PRINTER_ID))
+    if DEBUG:
+        log('Printer ID: {0}'.format(PRINTER_ID))
 
     # Start asynchonous server
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     loop.run_until_complete(start_server())
     loop.run_forever()
