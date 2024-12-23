@@ -14,7 +14,7 @@ import paho.mqtt.client as paho
 
 
 def log(message):
-    print(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' [moonraker-proxy] ' + message)
+    print(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' [moonraker-proxy] ' + message, flush = True)
 
 
 
@@ -82,7 +82,7 @@ async def mqtt_printfile(file):
 
         mqtt_print_report = True
 
-    client = paho.Client(paho.CallbackAPIVersion.VERSION2, protocol = paho.MQTTv5)
+    client = paho.Client(protocol = paho.MQTTv5)
     client.on_connect = mqtt_on_connect
     client.on_message = mqtt_on_message
 
