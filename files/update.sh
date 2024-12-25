@@ -111,6 +111,8 @@ cp ${update_file_path}/start-rinkhals.sh /useremain/rinkhals/start-rinkhals.sh
 cp ${update_file_path}/start.sh.patch /useremain/rinkhals/start.sh.patch
 echo ${RINKHALS_VERSION} > /useremain/rinkhals/.version
 
+rm /useremain/rinkhals/.disable-rinkhals
+
 
 # Install Rinkhals loader
 progress 0.9
