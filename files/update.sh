@@ -23,15 +23,15 @@ function log() {
     echo "`date`: ${*}" >> /mnt/udisk/aGVscF9zb3Nf/install.log
 }
 function progress() {
-    if [[ "${*}" == "success" ]]; then
+    if [ "$1" == "success" ]; then
         fb_draw "drawbox=x=16:y=16:w=32:h=ih-32:t=fill:color=black,drawbox=x=20:y=20:w=24:h=ih-40:t=fill:color=green"
         return
     fi
-    if [[ "${*}" == "error" ]]; then
+    if [ "$1" == "error" ]; then
         fb_draw "drawbox=x=16:y=16:w=32:h=ih-32:t=fill:color=black,drawbox=x=20:y=20:w=24:h=ih-40:t=fill:color=red"
         return
     fi
-    if [[ ${*} == 0 ]]; then
+    if [ $1 == 0 ]; then
         fb_draw "drawbox=x=16:y=16:w=32:h=ih-32:t=fill:color=black"
         return
     fi
@@ -55,6 +55,7 @@ function fb_draw() {
 }
 
 
+log
 log "Starting Rinkhals installation..."
 
 
@@ -81,9 +82,20 @@ if [[ "$KOBRA_VERSION" != "2.3.5.3" ]]; then
 fi
 
 
-# Backup the machine-specific files
+# Stop Rinkhals if it is running already
 progress 0.1
+if [ -f /useremain/rinkhals/.current/stop.sh ]; then
+    log "Stopping Rinkhals"
 
+    chmod +x /useremain/rinkhals/.current/stop.sh
+    /useremain/rinkhals/.current/stop.sh
+fi
+
+
+# Backup the machine-specific files
+progress 0.2
+
+log "Backing up machine-specific files"
 rm -f /mnt/udisk/aGVscF9zb3Nf/device.ini
 rm -f /mnt/udisk/aGVscF9zb3Nf/device_account.json
 cp /userdata/app/gk/config/device.ini /mnt/udisk/aGVscF9zb3Nf/device.ini
@@ -94,11 +106,12 @@ cp /userdata/app/gk/config/device_account.json /mnt/udisk/aGVscF9zb3Nf/device_ac
 
 
 # Copy Rinkhals
-progress 0.2
+progress 0.3
 
 RINKHALS_VERSION=`cat ${update_file_path}/.version`
 log "Installing Rinkhals version $RINKHALS_VERSION"
 
+log "Copying Rinkhals files"
 mkdir -p /useremain/rinkhals/${RINKHALS_VERSION}
 rm -rf /useremain/rinkhals/${RINKHALS_VERSION}/*
 cp -r ${update_file_path}/rinkhals/* /useremain/rinkhals/${RINKHALS_VERSION}
@@ -106,6 +119,7 @@ echo ${RINKHALS_VERSION} > /useremain/rinkhals/${RINKHALS_VERSION}/.version
 
 progress 0.8
 
+log "Copying Rinkhals startup files"
 rm -f /useremain/rinkhals/*.*
 cp ${update_file_path}/start-rinkhals.sh /useremain/rinkhals/start-rinkhals.sh
 cp ${update_file_path}/start.sh.patch /useremain/rinkhals/start.sh.patch
@@ -127,6 +141,7 @@ else
     log "Rinkhals loader was detected, skipping installation"
 fi
 
+log "Removing update files"
 rm -rf ${update_file_path}
 rm -rf ${to_gcode_path}/update.swu
 rm -rf ${swu_path}/update.swu
