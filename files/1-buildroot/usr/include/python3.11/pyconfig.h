@@ -678,7 +678,7 @@
 /* #undef HAVE_LIBNDBM */
 
 /* Define to build the readline module. */
-/* #undef HAVE_LIBREADLINE */
+#define HAVE_LIBREADLINE 1
 
 /* Define to 1 if you have the `resolv' library (-lresolv). */
 /* #undef HAVE_LIBRESOLV */
@@ -964,28 +964,28 @@
 #define HAVE_RENAMEAT 1
 
 /* Define if readline supports append_history */
-/* #undef HAVE_RL_APPEND_HISTORY */
+#define HAVE_RL_APPEND_HISTORY 1
 
 /* Define if you can turn off readline's signal handling. */
-/* #undef HAVE_RL_CATCH_SIGNAL */
+#define HAVE_RL_CATCH_SIGNAL 1
 
 /* Define if you have readline 2.2 */
-/* #undef HAVE_RL_COMPLETION_APPEND_CHARACTER */
+#define HAVE_RL_COMPLETION_APPEND_CHARACTER 1
 
 /* Define if you have readline 4.0 */
-/* #undef HAVE_RL_COMPLETION_DISPLAY_MATCHES_HOOK */
+#define HAVE_RL_COMPLETION_DISPLAY_MATCHES_HOOK 1
 
 /* Define if you have readline 4.2 */
-/* #undef HAVE_RL_COMPLETION_MATCHES */
+#define HAVE_RL_COMPLETION_MATCHES 1
 
 /* Define if you have rl_completion_suppress_append */
-/* #undef HAVE_RL_COMPLETION_SUPPRESS_APPEND */
+#define HAVE_RL_COMPLETION_SUPPRESS_APPEND 1
 
 /* Define if you have readline 4.0 */
-/* #undef HAVE_RL_PRE_INPUT_HOOK */
+#define HAVE_RL_PRE_INPUT_HOOK 1
 
 /* Define if you have readline 4.0 */
-/* #undef HAVE_RL_RESIZE_TERMINAL */
+#define HAVE_RL_RESIZE_TERMINAL 1
 
 /* Define to 1 if you have the <rpc/rpc.h> header file. */
 /* #undef HAVE_RPC_RPC_H */
@@ -1460,10 +1460,10 @@
 /* #undef HAVE_UUID_ENC_BE */
 
 /* Define if uuid_generate_time_safe() exists. */
-#define HAVE_UUID_GENERATE_TIME_SAFE 1
+/* #undef HAVE_UUID_GENERATE_TIME_SAFE */
 
 /* Define to 1 if you have the <uuid.h> header file. */
-#define HAVE_UUID_H 1
+/* #undef HAVE_UUID_H */
 
 /* Define to 1 if you have the <uuid/uuid.h> header file. */
 /* #undef HAVE_UUID_UUID_H */

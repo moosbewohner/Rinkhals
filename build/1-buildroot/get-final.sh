@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # From a Windows machine:
-#   docker run --rm -it -e BUILDER_IP=x.x.x.x -e BUILDER_PATH=x -v .\build:/build -v .\files:/files --entrypoint=/bin/sh rclone/rclone:1.68.2 /build/1-luckfox/get-final.sh
+#   docker run --rm -it -e BUILDER_IP=x.x.x.x -e BUILDER_PATH=x -v .\build:/build -v .\files:/files --entrypoint=/bin/sh rclone/rclone:1.68.2 /build/1-buildroot/get-final.sh
 
 
 if [ "$BUILDER_IP" == "x.x.x.x" ] || [ "$BUILDER_IP" == "" ]; then
