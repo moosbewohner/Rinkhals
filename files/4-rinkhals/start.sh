@@ -22,18 +22,6 @@ kill_by_name() {
         kill -9 $PID
     done
 }
-kill_by_port() {
-    XPORT=`printf "%04X" ${*}`
-    INODE=`cat /proc/net/tcp | grep 00000000:$XPORT | awk '/.*:.*:.*/{print $10;}'`
-
-    if [[ "$INODE" != "" ]]; then
-        PID=`ls -l /proc/*/fd/* 2> /dev/null | grep "socket:\[$INODE\]" | awk -F'/' '{print $3}'`
-        CMDLINE=`cat /proc/$PID/cmdline`
-
-        log "Killing $PID ($CMDLINE)"
-        kill -9 $PID
-    fi
-}
 assert_by_name() {
     PIDS=`ps | grep "$1" | grep -v grep | awk '{print $1}'`
 
@@ -42,14 +30,26 @@ assert_by_name() {
         quit
     fi
 }
-check_by_port() {
-    XPORT=`printf "%04X" ${*}`
-    INODE=`cat /proc/net/tcp | grep 00000000:$XPORT | awk '/.*:.*:.*/{print $10;}'` # Port 2222
-    if [[ "$INODE" != "" ]]; then
-        return 1
-    fi
+wait_for_port() {
+    DELAY=250
+    TOTAL=0
 
-    return 0
+    while [ 1 ]; do
+        OPEN=`netstat -tln | grep :$1`
+        if [ "$OPEN" != "" ]; then
+            break
+        fi
+
+        if [ "$TOTAL" -gt "60000" ]; then
+            log "/!\ Timeout waiting for port $1 to open"
+            quit
+        fi
+
+        msleep $DELAY
+
+        TOTAL=$(( $TOTAL + $DELAY ))
+        DELAY=$(( $DELAY * 2 ))
+    done
 }
 quit() {
     echo
@@ -71,6 +71,7 @@ ntpclient -s -h pool.ntp.org > /dev/null # Try to sync local time before startin
 KOBRA_VERSION=`cat /useremain/dev/version`
 RINKHALS_ROOT=`dirname $(realpath $0)`
 RINKHALS_VERSION=`cat $RINKHALS_ROOT/.version`
+RINKHALS_HOME=/useremain/home/rinkhals
 
 if [ "$KOBRA_VERSION" != "2.3.5.3" ]; then
     log "Your printer has firmware $KOBRA_VERSION. This Rinkhals version is only compatible with Kobra firmware 2.3.5.3, stopping startup"
@@ -113,6 +114,7 @@ log " --------------------------------------------------"
 log "| Kobra firmware: $KOBRA_VERSION"
 log "| Rinkhals version: $RINKHALS_VERSION"
 log "| Rinkhals root: $RINKHALS_ROOT"
+log "| Rinkhals home: $RINKHALS_HOME"
 log " --------------------------------------------------"
 echo
 
@@ -195,9 +197,10 @@ fi
 ################
 log "> Preparing mounts..."
 
+mkdir -p $RINKHALS_HOME/printer_data
 mkdir -p /userdata/app/gk/printer_data
 umount -l /userdata/app/gk/printer_data 2> /dev/null
-mount --bind /useremain/home/rinkhals/printer_data /userdata/app/gk/printer_data
+mount --bind $RINKHALS_HOME/printer_data /userdata/app/gk/printer_data
 
 mkdir -p /userdata/app/gk/printer_data/config/default
 umount -l /userdata/app/gk/printer_data/config/default 2> /dev/null
@@ -215,80 +218,76 @@ mount --bind /useremain/app/gk/gcodes /userdata/app/gk/printer_data/gcodes
 log "> Starting Moonraker..."
 
 kill_by_name moonraker.py
-HOME=/userdata/app/gk python /usr/share/moonraker/moonraker/moonraker.py >> ./logs/moonraker.log 2>&1 &
-assert_by_name moonraker.py
-
 kill_by_name moonraker-proxy.py
-python /usr/share/scripts/moonraker-proxy.py >> ./logs/moonraker.log 2>&1 &
-assert_by_name moonraker-proxy.py
 
-# python -m /usr/share/octoapp/moonraker_octoapp "ewogICAgJ0tsaXBwZXJDb25maWdGb2xkZXInOiAnL3VzZXJlbWFpbi9yaW5raGFscy9xdWljay1kZXBsb3kvaG9tZS9yaW5raGFscy9wcmludGVyX2RhdGEvY29uZmlnJywKICAgICdNb29ucmFrZXJDb25maWdGaWxlJzogJy91c2VyZW1haW4vcmlua2hhbHMvcXVpY2stZGVwbG95L2hvbWUvcmlua2hhbHMvcHJpbnRlcl9kYXRhL2NvbmZpZy9tb29ucmFrZXIuY29uZicsCiAgICAnS2xpcHBlckxvZ0ZvbGRlcic6ICcvdXNlcmVtYWluL3JpbmtoYWxzL3F1aWNrLWRlcGxveS9ob21lL3JpbmtoYWxzL3ByaW50ZXJfZGF0YS9sb2dzJywKICAgICdMb2NhbEZpbGVTdG9yYWdlUGF0aCc6ICcvdXNlcmVtYWluL3JpbmtoYWxzL3F1aWNrLWRlcGxveS9ob21lL3JpbmtoYWxzL29jdG9hcHAnLAogICAgJ0lzT2JzZXJ2ZXInIDogZmFsc2UKfQ=="
+if [ ! -f $RINKHALS_HOME/.disable-moonraker ]; then
+    HOME=/userdata/app/gk python /usr/share/moonraker/moonraker/moonraker.py >> ./logs/moonraker.log 2>&1 &
+    python /usr/share/scripts/moonraker-proxy.py >> ./logs/moonraker.log 2>&1 &
+    wait_for_port 7125
+else
+    log "/!\ Moonraker was disabled by .disable-moonraker"
+fi
 
-# {
-#     'KlipperConfigFolder': '/useremain/rinkhals/quick-deploy/home/rinkhals/printer_data/config',
-#     'MoonrakerConfigFile': '/useremain/rinkhals/quick-deploy/home/rinkhals/printer_data/config/moonraker.conf',
-#     'KlipperLogFolder': '/useremain/rinkhals/quick-deploy/home/rinkhals/printer_data/logs',
-#     'LocalFileStoragePath': '/useremain/rinkhals/quick-deploy/home/rinkhals/octoapp',
-#     'IsObserver' : false
-# }
+
+################
+# log "> Starting OctoApp companion..."
+
+# if [ ! -f $RINKHALS_HOME/.disable-octoapp ]; then
+#     # python -m /usr/share/octoapp/moonraker_octoapp "ewogICAgJ0tsaXBwZXJDb25maWdGb2xkZXInOiAnL3VzZXJlbWFpbi9yaW5raGFscy9xdWljay1kZXBsb3kvaG9tZS9yaW5raGFscy9wcmludGVyX2RhdGEvY29uZmlnJywKICAgICdNb29ucmFrZXJDb25maWdGaWxlJzogJy91c2VyZW1haW4vcmlua2hhbHMvcXVpY2stZGVwbG95L2hvbWUvcmlua2hhbHMvcHJpbnRlcl9kYXRhL2NvbmZpZy9tb29ucmFrZXIuY29uZicsCiAgICAnS2xpcHBlckxvZ0ZvbGRlcic6ICcvdXNlcmVtYWluL3JpbmtoYWxzL3F1aWNrLWRlcGxveS9ob21lL3JpbmtoYWxzL3ByaW50ZXJfZGF0YS9sb2dzJywKICAgICdMb2NhbEZpbGVTdG9yYWdlUGF0aCc6ICcvdXNlcmVtYWluL3JpbmtoYWxzL3F1aWNrLWRlcGxveS9ob21lL3JpbmtoYWxzL29jdG9hcHAnLAogICAgJ0lzT2JzZXJ2ZXInIDogZmFsc2UKfQ=="
+
+#     # {
+#     #     'KlipperConfigFolder': '/useremain/rinkhals/quick-deploy/home/rinkhals/printer_data/config',
+#     #     'MoonrakerConfigFile': '/useremain/rinkhals/quick-deploy/home/rinkhals/printer_data/config/moonraker.conf',
+#     #     'KlipperLogFolder': '/useremain/rinkhals/quick-deploy/home/rinkhals/printer_data/logs',
+#     #     'LocalFileStoragePath': '/useremain/rinkhals/quick-deploy/home/rinkhals/octoapp',
+#     #     'IsObserver' : false
+#     # }
+# else
+#     log "/!\ OctoApp companion was disabled by .disable-octoapp"
+# fi
 
 
 ################
 log "> Starting nginx..."
 
 kill_by_name nginx
-mkdir -p /var/log/nginx
-mkdir -p /var/cache/nginx
 
-nginx -c /usr/local/etc/nginx/nginx.conf &
+if [ ! -f $RINKHALS_HOME/.disable-nginx ]; then
+    mkdir -p /var/log/nginx
+    mkdir -p /var/cache/nginx
+
+    nginx -c /usr/local/etc/nginx/nginx.conf &
+    wait_for_port 80
+else
+    log "/!\ nginx was disabled by .disable-nginx"
+fi
 
 
 ################
 log "> Starting mjpg-streamer..."
 
-if [ -e /dev/video10 ]; then
-    kill_by_name gkcam
-    kill_by_name mjpg_streamer
+kill_by_name mjpg_streamer
 
-    sleep 1
+if [ ! -f $RINKHALS_HOME/.disable-mjpgstreamer ]; then
+    if [ -e /dev/video10 ]; then
+        kill_by_name gkcam
 
-    mjpg_streamer -i "/usr/lib/mjpg-streamer/input_uvc.so -d /dev/video10 -n" -o "/usr/lib/mjpg-streamer/output_http.so -w /usr/share/mjpg-streamer/www"  >> ./logs/mjpg_streamer.log 2>&1 &
+        sleep 1
+
+        mjpg_streamer -i "/usr/lib/mjpg-streamer/input_uvc.so -d /dev/video10 -n" -o "/usr/lib/mjpg-streamer/output_http.so -w /usr/share/mjpg-streamer/www"  >> ./logs/mjpg_streamer.log 2>&1 &
+        wait_for_port 8080
+    else
+        log "Webcam /dev/video10 not found. mjpg-streamer will not start"
+    fi
 else
-    log "Webcam /dev/video10 not found. mjpg-streamer will not start"
+    log "/!\ mjpg-streamer was disabled by .disable-mjpgstreamer"
 fi
 
 
 ################
-log "> Waiting for everything to start..."
-
-n=60
-while [ "$n" != "0" ]; do
-    n=$(( $n - 1 ))
-    sleep 1
-
-    ERROR=0
-    
-    for PORT in 80 4408 4409 7125 8080; do
-        if [ "$PORT" == "8080" ] && [ ! -e /dev/video10 ]; then
-            break
-        fi
-
-        check_by_port $PORT
-
-        if [ "$?" == "0" ]; then
-            ERROR=1
-            break
-        fi
-    done
-
-    if [ "$ERROR" == "0" ]; then
-        break
-    fi
-done
-
-if [ "$n" == "0" ]; then
-    log "/!\ Timeout waiting for everything to start"
-    quit
+if [ ! -f $RINKHALS_HOME/.disable-moonraker ]; then
+    log "> Waiting for Moonraker to start..."
+    wait_for_port 7126
 fi
 
 
@@ -311,6 +310,7 @@ sleep 1
 
 assert_by_name gklib
 assert_by_name gkapi
+assert_by_name K3SysUi
 
 
 ################
