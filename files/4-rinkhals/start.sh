@@ -270,27 +270,6 @@ fi
 
 
 ################
-log "> Starting mjpg-streamer..."
-
-kill_by_name mjpg_streamer
-
-if [ ! -f $RINKHALS_HOME/.disable-mjpgstreamer ]; then
-    if [ -e /dev/video10 ]; then
-        kill_by_name gkcam
-
-        sleep 1
-
-        mjpg_streamer -i "/usr/lib/mjpg-streamer/input_uvc.so -d /dev/video10 -n" -o "/usr/lib/mjpg-streamer/output_http.so -w /usr/share/mjpg-streamer/www"  >> ./logs/mjpg_streamer.log 2>&1 &
-        wait_for_port 8080
-    else
-        log "Webcam /dev/video10 not found. mjpg-streamer will not start"
-    fi
-else
-    log "/!\ mjpg-streamer was disabled by .disable-mjpgstreamer"
-fi
-
-
-################
 log "> Restarting Anycubic apps..."
 
 cd /userdata/app/gk
@@ -310,6 +289,27 @@ sleep 1
 assert_by_name gklib
 assert_by_name gkapi
 #assert_by_name K3SysUi
+
+
+################
+log "> Starting mjpg-streamer..."
+
+kill_by_name mjpg_streamer
+
+if [ ! -f $RINKHALS_HOME/.disable-mjpgstreamer ]; then
+    if [ -e /dev/video10 ]; then
+        kill_by_name gkcam
+
+        sleep 1
+
+        mjpg_streamer -i "/usr/lib/mjpg-streamer/input_uvc.so -d /dev/video10 -n" -o "/usr/lib/mjpg-streamer/output_http.so -w /usr/share/mjpg-streamer/www"  >> ./logs/mjpg_streamer.log 2>&1 &
+        wait_for_port 8080
+    else
+        log "Webcam /dev/video10 not found. mjpg-streamer will not start"
+    fi
+else
+    log "/!\ mjpg-streamer was disabled by .disable-mjpgstreamer"
+fi
 
 
 ################
