@@ -2,7 +2,7 @@ All my scripts / code is provided under this license:
 
     The MIT License (MIT)
 
-    Copyright (c) 2024 Julien Batonnet
+    Copyright (c) 2025 Julien Batonnet
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -30,5 +30,5 @@ All existing code / binaries / projects are provided here under their own licens
 - files/2-external/usr/share/mainsail/* > https://github.com/mainsail-crew/mainsail/blob/master/LICENSE
 - files/2-external/usr/share/moonraker/* > https://github.com/utkabobr/moonraker/blob/master/LICENSE
 - files/2-external/usr/share/octoapp/* > https://github.com/crysxd/OctoApp-Plugin/blob/release/LICENSE
-- files/3-python/usr/lib/python3.12/site-packages/* > Corresponding module licenses
+- files/3-python/usr/lib/python*/site-packages/* > Corresponding module licenses
 - icon.png > https://www.flaticon.com/free-icons/snake

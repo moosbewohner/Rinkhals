@@ -1,12 +1,13 @@
 > [!CAUTION]
-> **THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. BY USING IT YOU TAKE ALL THE RISKS FOR YOUR ACTIONS**
+> **THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. BY USING IT YOU TAKE ALL THE RISKS FOR YOUR ACTIONS**<br />
+> **THIS FIRMWARE IS A WORK IN PROGRESS, DO NOT USE IT UNLESS YOU KNOW HOW TO USE LINUX AND HOW TO RECOVER OR UNBRICK YOUR PRINTER**
 
 # Rinkhals
 
 Rinkhals is a custom firmware for the Anycubic Kobra 3 3D printer. The goal of this project is to create a simple and safe overlay for the Kobra 3 firmware, adding some usefule features.
-Multiple versions can be installed at the same time and it can easily be disabled.
+This firmware will likely not support all use cases, like running vanilla Klipper or your specific feature / plugin.
 
-Here is a list of the features I added:
+Here are some of the features I added:
 - Mainsail, Fluidd and Moonraker (using nginx)
 - USB camera support through Fluidd and Moonraker (mjpg-streamer)
 - Print from Moonraker will show the print screen (moonraker-proxy)
@@ -22,23 +23,11 @@ The stock firmwares are available on a separate branch: https://github.com/jbato
 </p>
 
 
-## Known issues / Future developments
+## Documentation / Known issues
 
 The [wiki](https://github.com/jbatonnet/Rinkhals/wiki) is a collection of documentation, reverse engineering and notes about the printer and development, don't forget to [check it out](https://github.com/jbatonnet/Rinkhals/wiki)!
 
-- If not installed properly, the printer shows a 11407 error > [See the wiki about error 11407](https://github.com/jbatonnet/Rinkhals/wiki/Firmware#my-printer-shows-a-11407-error)
-- The camera is not accessible from Anycubic apps anymore
-- Mainsail/Fluidd gcode preview doesn't work
-- OctoApp notification plugin is missing
-
-Other:
-- Check free space before install
-- Buildroot / FFmpeg with freetext, mjpeg, fbdev, png, bmp, h264
-- Installation screen (kill K3SysUi, show screens then reboot or restore K3SysUi?)
-- Reimplement gkcam
-- Timelapse support
-- Logs cleanup
-- Old Rinkhals versions cleanup
+If your printer shows a 11407 error, check the wiki there: [See the wiki about error 11407](https://github.com/jbatonnet/Rinkhals/wiki/Firmware#my-printer-shows-a-11407-error)
 
 
 ## SWU tools
@@ -99,59 +88,43 @@ Then you can delete the /useremain/rinkhals directory. That's it!
 </p>
 
 
-## Repo structure
-
-- **doc/**: Some documentation I gathered on my journey
-- **build/**: The tools, scripts and Dockerfiles needed to build this project
-    - **1-buildroot/**: Buildroot setup to build the base filesystem / binaries
-    - **2-external/**: Scripts to get the external components like Fluidd and Mainsail
-    - **3-python/**: Dockerfile and script to build and get the necessary Python packages
-- **files/**: The target filesystem overlay and the scripts needed to run the firmware
-    - **1-buildroot/**: First layer containing Buildroot built binaries
-    - **2-external/**: External components layer for Fluidd, Mainsail, Moonraker and OctoApp
-    - **3-python/**: Layer with all the necessary Python packages
-    - **4-rinkhals/**: Fimware config and scripts to run Rinkhals
-
-
-## Firmware startup
-
-During this custom firmware installation, **update.sh** will install the overlay filesystem in **/useremain/rinkhals**. Every version you install will end up in a different directory, allowing you to easily switch between versions or rollback if something goes wrong.
-
-Then **start.sh.patch** if appended at the end of the default startup scripts. Its goal is to check Rinkhals installation with minimal modification and run **start-rinkhals.sh**.
-
-**start-rinkhals.sh** will now check for the requested version in **/useremain/rinkhals/.version**, check for a **.disable-rinkhals** file on a USB drive if needed and then run the actual Rinkhals loader for the selected version.
-
-
 ## Development
 
-If you want to fully build this firmware yourself and avoid using the prebuilt binaries, you will need to do the following:
+> [!WARNING]
+> If you develop on Windows, like I'm doing, don't forget to disable Git's autocrlf function, as this repo contains Linux scripts running on Linux machines.<br />
+> Run `git config core.autocrlf false` **BEFORE** cloning the repo
 
-- Layer 1: Buildroot (**files/1-buildroot**)
-    - Build and run `build/buildroot/Dockerfile` or start your own instance
-        - Some run examples are provider in the Dockerfile
-    - Use the `build/buildroot/.config` Buildroot configuration file to build the base filesystem binaries
-    - Use `build/buildroot/build-target.sh` to filter and extract the files in `/output`
+If you want to fully build this firmware yourself and avoid using the prebuilt binaries, Dockerfiles and build scripts are provided.
 
-- Layer 2: External apps (**files/2-external**)
-    - Update git submodules
-    - Build **files/2-external/Dockerfile** if you want
-    - `docker run --rm -it -v .\build:/build -v .\files:/files ghcr.io/jbatonnet/rinkhals/build /build/2-external/get-external.sh`
+Now if you just want to tweak things and maybe fix some bugs or add new features, you will need either a Linux machine or a Windows machine with Docker.
 
-- Layer 3: Python packages for Moonraker (**files/3-python**)
-    - Build **files/3-python/Dockerfile** if you want
-    - `docker run --privileged --rm tonistiigi/binfmt --install all`
-    - `docker run --rm -it -v .\build:/build -v .\files:/files ghcr.io/jbatonnet/rinkhals/python /build/3-python/copy-output.sh`
+Here are the steps: 
+- Clone the repo or Download the zip
+- Do your modifications
+- Open a terminal at the root of the repo, and run: `docker run --rm -it -e KOBRA_IP=x.x.x.x -v .\build:/build -v .\files:/files --entrypoint=/bin/sh rclone/rclone:1.68.2 /build/deploy-dev.sh`
 
-If you want to quickly iterate on development, a quick deployment method is provided:
+This will create a "dev" version on your printer. Using the script above will synchronize your workspace with your PC.
+Now you can start/restart your updated "dev" version using SSH:
+- `chmod +x /useremain/rinkhals/dev/start.sh`
+- `/useremain/rinkhals/dev/start.sh`
 
-- To synchronize your copy of Rinkhals on the printer, run `docker run --rm -it -e KOBRA_IP=x.x.x.x -v .\build:/build -v .\files:/files --entrypoint=/bin/sh rclone/rclone:1.68.2 /build/deploy-dev.sh`
-- On the printer, update **/useremain/rinkhals/.version** to `dev`
-- On the printer, run `/useremain/rinkhals/start-rinkhals.sh` to manually start Rinkhals
+I use VS Code for everything here, and it takes me about 30s~1m per iteration.
+
+If you ever want to create a full SWU with your version, use the `build-swu.sh` script with Docker, and you'll get your SWU in build/dist/update.swu:
+  `docker run --rm -it -e VERSION="yyyymmdd_nn" -v .\build:/build -v .\files:/files ghcr.io/jbatonnet/rinkhals/build /build/build-swu.sh`
+
+And if you want to keep things even simpler, fork the repo, do your modifications and push them. I provided some GitHub Actions to build the SWU for you:
+- Go there (on your fork): https://github.com/jbatonnet/Rinkhals/actions/workflows/build-swu.yml
+- Click "Run workflow", select your branch
+- The SWU will be built and added as an artifact to your workflow
+
+If you're ever stuck, reboot, use the SSH SWU tool to regain SSH if you lost it, or reflash the last version if things don't work.
 
 
 ## Thanks
 
 Thanks to the following projects/persons:
 - utkabobr (https://github.com/utkabobr/DuckPro-Kobra3)
-- systemik (https://github.com/systemik/Kobra3-Firmware/blob/main/update-preparation/cfw/scripts/led-on.sh)
+- systemik (https://github.com/systemik/Kobra3-Firmware)
+- Anycubic for the cool printer and the few OSS items (https://github.com/ANYCUBIC-3D/Kobra)
 - Icon created by Freepik - Flaticon (https://www.flaticon.com/free-icons/snake)
