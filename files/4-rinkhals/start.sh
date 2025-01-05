@@ -275,7 +275,7 @@ log "> Restarting Anycubic apps..."
 cd /userdata/app/gk
 export LD_LIBRARY_PATH=/userdata/app/gk:$LD_LIBRARY_PATH
 
-./gklib -a /tmp/unix_uds1 printer_data/config/printer.cfg &> $RINKHALS_ROOT/logs/gklib.log &
+./gklib -a /tmp/unix_uds1 /userdata/app/gk/printer_data/config/printer.cfg &> $RINKHALS_ROOT/logs/gklib.log &
 
 sleep 1
 
