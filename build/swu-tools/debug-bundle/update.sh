@@ -2,7 +2,7 @@
 
 function beep() {
     echo 1 > /sys/class/pwm/pwmchip0/pwm0/enable
-    usleep $((${*}*1000))
+    usleep $(($1 * 1000))
     echo 0 > /sys/class/pwm/pwmchip0/pwm0/enable
 }
 
