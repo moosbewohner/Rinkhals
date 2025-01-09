@@ -115,7 +115,7 @@ async def http_handler(request):
         data = await request.read()
         file_to_print = None
 
-        if request.method == 'POST' and request.raw_path == '/api/files/local':
+        if request.method == 'POST' and request.raw_path == '/api/files/local' and REMOTE_MODE == 'lan':
             data_str = data.decode('utf-8')
 
             print_index = data_str.index('form-data; name="print"')
