@@ -49,6 +49,8 @@ umount -l /bin 2> /dev/null
 umount -l /lib 2> /dev/null
 umount -l /sbin 2> /dev/null
 umount -l /usr 2> /dev/null
+umount -l /etc/ssl 2> /dev/null
+umount -l /etc/profile.d 2> /dev/null
 
 
 ################

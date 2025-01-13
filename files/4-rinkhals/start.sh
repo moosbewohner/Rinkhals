@@ -158,11 +158,15 @@ umount -l /sbin 2> /dev/null
 umount -l /bin 2> /dev/null
 umount -l /usr 2> /dev/null
 umount -l /lib 2> /dev/null
+umount -l /etc/ssl 2> /dev/null
+umount -l /etc/profile.d 2> /dev/null
 
 mount -o ro --bind ./lib /lib
 mount --bind ./usr /usr
 mount -o ro --bind ./bin /bin
 mount -o ro --bind ./sbin /sbin
+mount -o ro --bind ./etc/ssl /etc/ssl
+mount -o ro --bind ./etc/profile.d /etc/profile.d
 
 
 ################

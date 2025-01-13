@@ -9,7 +9,6 @@ cp -pr ./output/target/* ./output/final/
 rm -rf ./output/final/dev
 rm -rf ./output/final/lib32
 rm -rf ./output/final/media
-rm -rf ./output/final/etc
 rm -rf ./output/final/mnt
 rm -rf ./output/final/opt
 rm -rf ./output/final/proc
@@ -22,6 +21,12 @@ rm -rf ./output/final/usr/lib32
 rm -rf ./output/final/var
 rm ./output/final/THIS_IS_NOT_YOUR_ROOT_FILESYSTEM
 rm ./output/final/linuxrc
+
+# Clean /etc except for ssl
+for dir in ./output/final/etc/*; do
+    [ "$dir" = "./output/final/etc/ssl" ] && continue
+    rm -rf "$dir"
+done
 
 # Clean GCC copies
 rm -rf ./output/final/usr/bin/arm-buildroot-linux-uclibcgnueabihf-*
