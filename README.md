@@ -1,5 +1,7 @@
 > [!CAUTION]
-> **THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. BY USING IT YOU TAKE ALL THE RISKS FOR YOUR ACTIONS**<br />
+> **THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. BY USING IT YOU TAKE ALL THE RISKS FOR YOUR ACTIONS**
+
+> [!WARNING]
 > **THIS FIRMWARE IS A WORK IN PROGRESS, DO NOT USE IT UNLESS YOU KNOW HOW TO USE LINUX AND HOW TO RECOVER OR UNBRICK YOUR PRINTER**
 
 # Rinkhals
@@ -23,31 +25,16 @@ The stock firmwares are available on a separate branch: https://github.com/jbato
 </p>
 
 
-## Documentation / Known issues
-
-The [wiki](https://github.com/jbatonnet/Rinkhals/wiki) is a collection of documentation, reverse engineering and notes about the printer and development, don't forget to [check it out](https://github.com/jbatonnet/Rinkhals/wiki)!
-
-If your printer shows a 11407 error, check the wiki there: [See the wiki about error 11407](https://github.com/jbatonnet/Rinkhals/wiki/Firmware#my-printer-shows-a-11407-error)
 
 
-## SWU tools
-
-This repo contains some tools you can use **no matter what firmware you are using**. It is a set of scripts packaged in a SWU file.
-
-They are available on this page: https://github.com/jbatonnet/Rinkhals/actions/workflows/build-swu-tools.yml
-
-You can download the SWU file for the tool you want, copy it on a FAT32 USB drive in a **aGVscF9zb3Nf** directory, plug the USB drive in the Kobra and it just works.
-You will ear two beeps, the second one will tell you that the tool completed its work. There is no need to reboot afterwards.
-
-Here are the tools available:
-- **SSH**: get a SSH server running on port **2222**, even on stock firmware
-- **Backup partitions**: creates a dump of your userdata and useremain partition on the USB drive
-- **Debug bundle**: creates a zip file with printer and configuration information on the USB drive to ease debugging
 
 
-<p align="center">
-    <img width="48" src="https://github.com/jbatonnet/Rinkhals/blob/master/icon.png?raw=true" />
-</p>
+
+## Apps system
+
+An apps system is provided in Rinkhals. It allows for the users to easily add some features to their printer. Some default ones are provided and other are available on a separate repo: https://github.com/jbatonnet/Rinkhals.apps
+
+Instructions on how to install or develop apps are on the other repo as well.
 
 
 ## How to install Rinkhals
@@ -65,6 +52,33 @@ You can install Rinkhals on top of other custom firmwares. Rinkhals only appends
 - After about 20 seconds (the time for the printer to prepare the update), you will see a progress bar on the screen
     - If the progress bar turns green and you ear 2 beeps, the pritner reboots and Rinkhals is installed
     - If the progress bar turns red and you ear 3 beeps, the installation failed but everyhting should still work as usual. You will then find more information on the **aGVscF9zb3Nf/install.log** file on the USB drive
+
+
+<p align="center">
+    <img width="48" src="https://github.com/jbatonnet/Rinkhals/blob/master/icon.png?raw=true" />
+</p>
+
+
+## SWU tools
+
+This repo contains some tools you can use **no matter what firmware you are using**. It is a set of scripts packaged in a SWU file.
+
+They are available on this page: https://github.com/jbatonnet/Rinkhals/actions/workflows/build-swu-tools.yml
+
+You can download the SWU file for the tool you want, copy it on a FAT32 USB drive in a **aGVscF9zb3Nf** directory, plug the USB drive in the Kobra and it just works.
+You will ear two beeps, the second one will tell you that the tool completed its work. There is no need to reboot afterwards.
+
+Here are the tools available:
+- **SSH**: get a SSH server running on port **2222**, even on stock firmware
+- **Backup partitions**: creates a dump of your userdata and useremain partition on the USB drive
+- **Debug bundle**: creates a zip file with printer and configuration information on the USB drive to ease debugging
+
+
+## Documentation / Known issues
+
+The [wiki](https://github.com/jbatonnet/Rinkhals/wiki) is a collection of documentation, reverse engineering and notes about the printer and development, don't forget to [check it out](https://github.com/jbatonnet/Rinkhals/wiki)!
+
+If your printer shows a 11407 error, check the wiki there: [See the wiki about error 11407](https://github.com/jbatonnet/Rinkhals/wiki/Firmware#my-printer-shows-a-11407-error)
 
 
 ## How to uninstall Rinkhals
