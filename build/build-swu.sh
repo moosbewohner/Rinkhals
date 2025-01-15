@@ -14,6 +14,9 @@ mkdir -p /tmp/update_swu/rinkhals
 cp -r /files/*.* /tmp/update_swu
 chmod +x /tmp/update_swu/*.sh
 
+echo "Building layer 0/4 (stock)..."
+cp -pr /files/0-stock/* /tmp/update_swu/rinkhals
+
 echo "Building layer 1/4 (buildroot)..."
 cp -r /files/1-buildroot/* /tmp/update_swu/rinkhals
 
