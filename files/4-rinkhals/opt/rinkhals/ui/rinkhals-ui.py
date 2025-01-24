@@ -39,6 +39,11 @@ RINKHALS_HOME = f'{RINKHALS_ROOT}/home/rinkhals' if SIMULATOR else '/useremain/h
 BUILTIN_APP_PATH = f'{RINKHALS_ROOT}/home/rinkhals/apps'
 USER_APP_PATH = f'{RINKHALS_HOME}/apps'
 
+REMOTE_MODE = 'cloud'
+if os.path.isfile('/useremain/dev/remote_ctrl_mode'):
+    with open('/useremain/dev/remote_ctrl_mode', 'r') as f:
+        REMOTE_MODE = f.read().strip()
+
 
 def log(message):
     print(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' [rinkhals-ui] ' + message, flush = True)
@@ -149,7 +154,7 @@ def main():
         log(f'Home: {RINKHALS_HOME}')
 
     # Subscribe to print event to exit in case of print
-    if not SIMULATOR:
+    if not SIMULATOR and REMOTE_MODE == 'lan':
         subscribe_mqtt()
 
     # Monitor K3SysUi process to exit if it dies
