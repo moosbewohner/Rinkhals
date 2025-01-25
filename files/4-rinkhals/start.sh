@@ -22,7 +22,7 @@ export RINKHALS_ROOT=$(dirname $(realpath $0))
 export RINKHALS_VERSION=$(cat $RINKHALS_ROOT/.version)
 export RINKHALS_HOME=/useremain/home/rinkhals
 
-if [ "$KOBRA_VERSION" != "2.3.5.3" ]; then
+if [ "$KOBRA_VERSION" != "3.1.2.3" ]; then
     log "Your printer has firmware $KOBRA_VERSION. This Rinkhals version is only compatible with Kobra firmware 2.3.5.3, stopping startup"
     exit 1
 fi
@@ -201,7 +201,7 @@ kill_by_name moonraker-proxy.py
 
 if [ ! -f $RINKHALS_HOME/.disable-moonraker ]; then
     HOME=/userdata/app/gk python /usr/share/moonraker/moonraker/moonraker.py >> ./logs/moonraker.log 2>&1 &
-    python /opt/rinkhals/proxy/moonraker-proxy.py >> ./logs/moonraker.log 2>&1 &
+    #python /opt/rinkhals/proxy/moonraker-proxy.py >> ./logs/moonraker.log 2>&1 &
     wait_for_port 7125
 else
     log "/!\ Moonraker was disabled by .disable-moonraker"
@@ -225,10 +225,10 @@ fi
 
 
 ################
-if [ ! -f $RINKHALS_HOME/.disable-moonraker ]; then
-    log "> Waiting for Moonraker to start..."
-    wait_for_port 7126
-fi
+#if [ ! -f $RINKHALS_HOME/.disable-moonraker ]; then
+#    log "> Waiting for Moonraker to start..."
+#    wait_for_port 7125
+#fi
 
 
 ################
@@ -248,16 +248,16 @@ sleep 1
 # But K3SysUi checks for its binary location, so moving does the trick instead
 # Then directly restore the original file to keep everything tidy
 
-rm -rf K3SysUi.original 2> /dev/null
-mv K3SysUi K3SysUi.original
-cp /opt/rinkhals/ui/K3SysUi-2.3.5.3.patch K3SysUi
+#rm -rf K3SysUi.original 2> /dev/null
+#mv K3SysUi K3SysUi.original
+#cp /opt/rinkhals/ui/K3SysUi-2.3.5.3.patch K3SysUi
 
-chmod +x K3SysUi
+#chmod +x K3SysUi
 ./K3SysUi &> $RINKHALS_ROOT/logs/K3SysUi.log &
 
-rm -rf K3SysUi.patch 2> /dev/null
-mv K3SysUi K3SysUi.patch
-mv K3SysUi.original K3SysUi
+#rm -rf K3SysUi.patch 2> /dev/null
+#mv K3SysUi K3SysUi.patch
+#mv K3SysUi.original K3SysUi
 
 cd $RINKHALS_ROOT
 
