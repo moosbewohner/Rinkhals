@@ -19,6 +19,7 @@ This project is named after rinkhals. They are a sub-species of Cobras ... Kobra
 
 The stock firmwares are available on a separate branch: https://github.com/jbatonnet/Rinkhals/tree/stock-firmwares
 
+If you are interested in development anf/or testing, join me on Discord: https://discord.gg/3mrANjpNJC
 
 <p align="center">
     <img width="48" src="https://github.com/jbatonnet/Rinkhals/blob/master/icon.png?raw=true" />
