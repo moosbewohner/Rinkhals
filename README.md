@@ -50,7 +50,12 @@ Rinkhals uses an overlay system to keep its modifications isolated from the stoc
     - If the progress bar turns red and you ear 3 beeps, the installation failed but everyhting should still work as usual. You will then find more information in the **aGVscF9zb3Nf/install.log** file on the USB drive
 
 If needed, the stock firmwares are available over there: https://1drv.ms/f/s!Ag-0E4JXrqAlwbwl1zK9Le15gYv0sA?e=v2YMPT
-
+## Kobra 2 Pro  [Mainbord Trigorilla Spe **B** v1.0.x] with Firmware v. 3.1.4
+Downgrade: (to V. 3.1.2.3)
+ - Firmwarefile from Anycubic (https://drive.google.com/drive/folders/1nFJAXBey12f40RSBXfZcdZZS--gQ0zXd)
+ - Create a directory named **aGVscF9zb3Nf** on root from USB Stick
+ - Copy the **update.swu** file in the **aGVscF9zb3Nf** directory
+ - Plug the USB drive in the printer
 ## Touch UI
 
 _(Exclusive to Kobra 3 for now)_
