@@ -54,8 +54,10 @@ If needed, the stock firmwares are available over there: https://1drv.ms/f/s!Ag-
 Downgrade: (to V. 3.1.2.3)
  - Firmwarefile from Here (**https://1drv.ms/f/s!Ag-0E4JXrqAlwbwl1zK9Le15gYv0sA?e=v2YMPT**)
  - Create a directory named **aGVscF9zb3Nf** on root from USB Stick
+ - rename **K2P_3.1.2.3.swu** to **update.swu**
  - Copy the **update.swu** file in the **aGVscF9zb3Nf** directory
  - Plug the USB drive in the printer
+ - make one Beeb then wait to reboot 
 ## Touch UI
 
 _(Exclusive to Kobra 3 for now)_
