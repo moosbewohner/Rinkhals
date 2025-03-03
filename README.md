@@ -53,11 +53,14 @@ If needed, the stock firmwares are available over there: https://1drv.ms/f/s!Ag-
 ## Kobra 2 Pro  [Mainbord Trigorilla Spe **B** v1.0.x] with Firmware v. 3.1.4
 Downgrade: (to V. 3.1.2.3)
  - Firmwarefile from Here (**https://1drv.ms/f/s!Ag-0E4JXrqAlwbwl1zK9Le15gYv0sA?e=v2YMPT**)
- - Create a directory named **aGVscF9zb3Nf** on root from USB Stick
+ - Create a directory named **update** on root from USB Stick
  - rename **K2P_3.1.2.3.swu** to **update.swu**
- - Copy the **update.swu** file in the **aGVscF9zb3Nf** directory
- - Plug the USB drive in the printer
- - make one Beeb then wait to reboot 
+ - Copy the **update.swu** file in the **update** directory
+ - Insert the stick into the switched on printer
+ - go to "about Machine" in the printer menu
+ - next to the version number you should now see an arrow pointing up > click on it
+ - confirm it
+ **Enjoy the old version**
 ## Touch UI
 
 _(Exclusive to Kobra 3 for now)_
