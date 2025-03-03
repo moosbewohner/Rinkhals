@@ -60,7 +60,9 @@ Downgrade: (to V. 3.1.2.3)
  - go to "about Machine" in the printer menu
  - next to the version number you should now see an arrow pointing up > click on it
  - confirm it
+
  **Enjoy the old version**
+ 
 ## Touch UI
 
 _(Exclusive to Kobra 3 for now)_
